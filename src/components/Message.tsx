@@ -1,5 +1,7 @@
 import React from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, Volume2 } from 'lucide-react';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import toast from 'react-hot-toast';
 
 interface MessageProps {
     content:
@@ -20,6 +22,13 @@ export const Message: React.FC<MessageProps> = ({
 }) => {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
+        toast.success('Copied to clipboard!');
+    };
+
+    const speakText = (text: string) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+        toast.success('Speaking text...');
     };
 
     const renderContent = () => {
@@ -65,38 +74,89 @@ export const Message: React.FC<MessageProps> = ({
     };
 
     return (
-        <div
-            className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}
-        >
+        <Tooltip.Provider delayDuration={200}>
             <div
-                className={`max-w-[70%] min-w-[15%] ${
-                    isUser
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
-                } p-3 rounded-lg shadow-md`}
+                className={`flex ${
+                    isUser ? 'justify-end' : 'justify-start'
+                } mb-4 animate-fadeIn`}
             >
-                {renderContent()}
                 <div
-                    className={`text-xs text-center flex items-center justify-between w-full ${
-                        isUser ? 'text-blue-100' : 'text-gray-500'
-                    } mt-2`}
+                    className={`max-w-[70%] min-w-[15%] ${
+                        isUser
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                            : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-900 dark:text-white'
+                    } p-4 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 backdrop-blur-sm
+                border ${
+                    isUser
+                        ? 'border-blue-400/20'
+                        : 'border-gray-200/20 dark:border-gray-700/20'
+                }`}
                 >
-                    <div>{timestamp}</div>
-                    <div className="flex items-center justify-center">
-                        {typeof content == 'string' && (
-                            <button
-                                onClick={() => copyToClipboard(content)}
-                                className="rounded text-gray-300 hover:text-white"
-                            >
-                                <Copy
-                                    size={14}
-                                    className="my-auto"
-                                />
-                            </button>
-                        )}
+                    {renderContent()}
+                    <div
+                        className={`text-xs text-center flex items-center justify-between w-full ${
+                            isUser ? 'text-blue-100' : 'text-gray-500'
+                        } mt-2 opacity-75`}
+                    >
+                        <div>{timestamp}</div>
+                        <div className="flex items-center justify-center gap-2">
+                            {typeof content === 'string' && (
+                                <>
+                                    <Tooltip.Root>
+                                        <Tooltip.Trigger asChild>
+                                            <button
+                                                onClick={() =>
+                                                    speakText(content)
+                                                }
+                                                className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                                            >
+                                                <Volume2
+                                                    size={14}
+                                                    className="text-gray-300 hover:text-white"
+                                                />
+                                            </button>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Portal>
+                                            <Tooltip.Content
+                                                className="bg-black/75 text-white px-2 py-1 rounded text-xs"
+                                                sideOffset={5}
+                                            >
+                                                Speak text
+                                                <Tooltip.Arrow className="fill-black/75" />
+                                            </Tooltip.Content>
+                                        </Tooltip.Portal>
+                                    </Tooltip.Root>
+
+                                    <Tooltip.Root>
+                                        <Tooltip.Trigger asChild>
+                                            <button
+                                                onClick={() =>
+                                                    copyToClipboard(content)
+                                                }
+                                                className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                                            >
+                                                <Copy
+                                                    size={14}
+                                                    className="text-gray-300 hover:text-white"
+                                                />
+                                            </button>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Portal>
+                                            <Tooltip.Content
+                                                className="bg-black/75 text-white px-2 py-1 rounded text-xs"
+                                                sideOffset={5}
+                                            >
+                                                Copy to clipboard
+                                                <Tooltip.Arrow className="fill-black/75" />
+                                            </Tooltip.Content>
+                                        </Tooltip.Portal>
+                                    </Tooltip.Root>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </Tooltip.Provider>
     );
 };

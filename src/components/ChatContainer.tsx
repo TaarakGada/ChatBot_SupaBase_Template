@@ -21,8 +21,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     onSendFiles,
 }) => {
     return (
-        <div className="flex flex-col h-full w-7/12 max-h-[80%]">
-            <div className="flex-grow overflow-y-auto p-16">
+        <div className="flex flex-col h-full w-7/12 max-h-[80%] animate-fadeIn">
+            <div className="flex-grow overflow-y-auto scroll-smooth custom-scrollbar p-16 space-y-6">
                 {messages.map((message) => (
                     <Message
                         key={message.id}
