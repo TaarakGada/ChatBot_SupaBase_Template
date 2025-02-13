@@ -40,6 +40,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const [filteredTools, setFilteredTools] = useState(tools);
     const [selectedToolIndex, setSelectedToolIndex] = useState(0);
     const [isFileListCollapsed, setIsFileListCollapsed] = useState(false);
+    const [fileError, setFileError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -206,6 +207,34 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         setShowToolList(false);
     };
 
+    // Function to check if file already exists in selected files
+    const isFileAlreadySelected = (newFile: File) => {
+        return selectedFiles.some(
+            (file) => file.name === newFile.name && file.size === newFile.size
+        );
+    };
+
+    // Function to handle file selection
+    const handleFileSelection = (files: FileList | null) => {
+        if (!files) return;
+
+        const newFiles = Array.from(files);
+        const uniqueNewFiles = newFiles.filter(
+            (file) => !isFileAlreadySelected(file)
+        );
+
+        if (uniqueNewFiles.length === 0) {
+            setFileError('Selected files are already added');
+            setTimeout(() => setFileError(null), 3000);
+            return;
+        }
+
+        setSelectedFiles((prev) => [...prev, ...uniqueNewFiles]);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''; // Reset input for same file selection
+        }
+    };
+
     return (
         <Tooltip.Provider delayDuration={200}>
             <div className="fixed bottom-0 left-0 right-0 p-6 z-10">
@@ -232,28 +261,75 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 {selectedFiles.length > 0 && (
                     <div className="max-w-[50%] mx-auto mb-4">
                         <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg">
-                            <div
-                                className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors"
-                                onClick={() =>
-                                    setIsFileListCollapsed(!isFileListCollapsed)
-                                }
-                            >
-                                <div className="text-sm text-white/70 font-medium px-2 flex items-center gap-2">
-                                    <span>
-                                        Selected Files ({selectedFiles.length})
-                                    </span>
-                                    {isFileListCollapsed ? (
-                                        <ChevronDown
-                                            size={16}
-                                            className="text-white/50"
-                                        />
-                                    ) : (
-                                        <ChevronUp
-                                            size={16}
-                                            className="text-white/50"
-                                        />
+                            <div className="flex items-center justify-between p-3">
+                                <div className="flex-1 flex items-center justify-between px-2">
+                                    <Tooltip.Root>
+                                        <Tooltip.Trigger asChild>
+                                            <div
+                                                className="flex items-center gap-2 cursor-pointer"
+                                                onClick={() =>
+                                                    setIsFileListCollapsed(
+                                                        !isFileListCollapsed
+                                                    )
+                                                }
+                                            >
+                                                <span className="text-sm text-white/70 font-medium">
+                                                    Selected Files (
+                                                    {selectedFiles.length})
+                                                </span>
+                                                {isFileListCollapsed ? (
+                                                    <ChevronUp
+                                                        size={16}
+                                                        className="text-white/50"
+                                                    />
+                                                ) : (
+                                                    <ChevronDown
+                                                        size={16}
+                                                        className="text-white/50"
+                                                    />
+                                                )}
+                                            </div>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Portal>
+                                            <Tooltip.Content
+                                                className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
+                                                sideOffset={5}
+                                            >
+                                                {isFileListCollapsed
+                                                    ? 'Expand file list'
+                                                    : 'Collapse file list'}
+                                                <Tooltip.Arrow className="fill-black/75" />
+                                            </Tooltip.Content>
+                                        </Tooltip.Portal>
+                                    </Tooltip.Root>
+                                    {fileError && (
+                                        <span className="text-xs text-red-400">
+                                            {fileError}
+                                        </span>
                                     )}
                                 </div>
+                                <Tooltip.Root>
+                                    <Tooltip.Trigger asChild>
+                                        <button
+                                            onClick={() => setSelectedFiles([])}
+                                            className="p-1.5 hover:bg-white/10 rounded-lg transition-all duration-200"
+                                        >
+                                            <X
+                                                size={14}
+                                                className="text-white/70"
+                                            />
+                                        </button>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Portal>
+                                        <Tooltip.Content
+                                            className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
+                                            sideOffset={5}
+                                        >
+                                            Clear all files
+                                            <Tooltip.Arrow className="fill-black/75" />
+                                        </Tooltip.Content>
+                                    </Tooltip.Portal>
+                                </Tooltip.Root>
                             </div>
 
                             <div
@@ -264,43 +340,77 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                         : 'max-h-[40vh]'
                                 }`}
                             >
-                                <div className="p-3 space-y-2 overflow-y-auto custom-scrollbar">
+                                <div
+                                    className="p-3 overflow-y-auto custom-scrollbar"
+                                    style={{ maxHeight: '35vh' }}
+                                >
                                     <div className="grid grid-cols-2 gap-2">
                                         {selectedFiles.map((file, index) => (
                                             <div
-                                                key={file.name + file.size}
+                                                key={`${file.name}-${file.size}-${index}`}
                                                 className="flex items-center gap-2 bg-white/5 rounded-lg p-2 group"
                                             >
                                                 {getFileIcon(file)}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-sm text-white truncate">
-                                                        {file.name}
-                                                    </div>
+                                                    <Tooltip.Root>
+                                                        <Tooltip.Trigger
+                                                            asChild
+                                                        >
+                                                            <div className="text-sm text-white truncate">
+                                                                {file.name}
+                                                            </div>
+                                                        </Tooltip.Trigger>
+                                                        <Tooltip.Portal>
+                                                            <Tooltip.Content
+                                                                className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999] max-w-md"
+                                                                sideOffset={5}
+                                                            >
+                                                                {file.name}
+                                                                <Tooltip.Arrow className="fill-black/75" />
+                                                            </Tooltip.Content>
+                                                        </Tooltip.Portal>
+                                                    </Tooltip.Root>
                                                     <div className="text-xs text-white/50">
                                                         {formatFileSize(
                                                             file.size
                                                         )}
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() =>
-                                                        setSelectedFiles(
-                                                            (prev) =>
-                                                                prev.filter(
-                                                                    (_, i) =>
-                                                                        i !==
-                                                                        index
+                                                <Tooltip.Root>
+                                                    <Tooltip.Trigger asChild>
+                                                        <button
+                                                            onClick={() =>
+                                                                setSelectedFiles(
+                                                                    (prev) =>
+                                                                        prev.filter(
+                                                                            (
+                                                                                _,
+                                                                                i
+                                                                            ) =>
+                                                                                i !==
+                                                                                index
+                                                                        )
                                                                 )
-                                                        )
-                                                    }
-                                                    className="p-1 opacity-0 group-hover:opacity-100 hover:bg-white/10 
-                                                    rounded-lg transition-all duration-200"
-                                                >
-                                                    <X
-                                                        size={14}
-                                                        className="text-white/70"
-                                                    />
-                                                </button>
+                                                            }
+                                                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-white/10 
+                                                            rounded-lg transition-all duration-200"
+                                                        >
+                                                            <X
+                                                                size={14}
+                                                                className="text-white/70"
+                                                            />
+                                                        </button>
+                                                    </Tooltip.Trigger>
+                                                    <Tooltip.Portal>
+                                                        <Tooltip.Content
+                                                            className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
+                                                            sideOffset={5}
+                                                        >
+                                                            Remove file
+                                                            <Tooltip.Arrow className="fill-black/75" />
+                                                        </Tooltip.Content>
+                                                    </Tooltip.Portal>
+                                                </Tooltip.Root>
                                             </div>
                                         ))}
                                     </div>
@@ -329,9 +439,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={(e) =>
-                                    setSelectedFiles(
-                                        Array.from(e.target.files || [])
-                                    )
+                                    handleFileSelection(e.target.files)
                                 }
                                 className="hidden"
                                 multiple
