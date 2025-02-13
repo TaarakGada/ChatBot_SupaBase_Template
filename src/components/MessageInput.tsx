@@ -8,8 +8,11 @@ import {
     Image as ImageIcon,
     ChevronUp,
     ChevronDown,
+    Loader2,
 } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import toast from 'react-hot-toast';
+import { sendToAI } from '../services/api';
 
 interface MessageInputProps {
     onSendMessage: (message: string) => void;
@@ -27,6 +30,9 @@ const tools = [
     { id: 'reminder', icon: '⏰', name: 'Reminder' },
 ];
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per file
+const MAX_TOTAL_SIZE = 8 * 1024 * 1024; // 8MB total
+
 export const MessageInput: React.FC<MessageInputProps> = ({
     onSendMessage,
     onSendVoice,
@@ -41,6 +47,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const [selectedToolIndex, setSelectedToolIndex] = useState(0);
     const [isFileListCollapsed, setIsFileListCollapsed] = useState(false);
     const [fileError, setFileError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -114,7 +122,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 const audioBlob = new Blob(chunksRef.current, {
                     type: 'audio/webm',
                 });
-                onSendVoice(audioBlob);
+                setVoiceBlob(audioBlob); // Store the blob instead of sending immediately
                 chunksRef.current = [];
                 stream.getTracks().forEach((track) => track.stop());
             };
@@ -126,6 +134,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             );
         } catch (err) {
             console.error('Error accessing microphone:', err);
+            toast.error('Failed to access microphone');
         }
     };
 
@@ -192,19 +201,74 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         setShowToolList(false);
     };
 
-    const handleSend = () => {
-        if (message.trim()) {
-            onSendMessage(message);
+    const validateFiles = (
+        files: File[]
+    ): { valid: boolean; error?: string } => {
+        let totalSize = 0;
+
+        for (const file of files) {
+            if (file.size > MAX_FILE_SIZE) {
+                return {
+                    valid: false,
+                    error: `File ${file.name} exceeds 5MB limit`,
+                };
+            }
+            totalSize += file.size;
+        }
+
+        if (totalSize > MAX_TOTAL_SIZE) {
+            return {
+                valid: false,
+                error: 'Total file size exceeds 8MB limit',
+            };
+        }
+
+        return { valid: true };
+    };
+
+    const handleCombinedSubmission = async () => {
+        if (!message.trim() && !voiceBlob && selectedFiles.length === 0) {
+            toast.error('Please provide a message, voice recording, or files');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // Create user message summary
+            const userContent = [
+                message.trim() && `${message.trim()}`,
+                voiceBlob &&
+                    `[Voice Recording: ${formatFileSize(voiceBlob.size)}]`,
+                selectedFiles.length > 0 &&
+                    `[Attached files: ${selectedFiles
+                        .map((f) => f.name)
+                        .join(', ')}]`,
+            ]
+                .filter(Boolean)
+                .join('\n');
+
+            // Send to parent component
+            onSendMessage(userContent);
+
+            // Clear all inputs
             setMessage('');
+            setVoiceBlob(null);
+            setSelectedFiles([]);
             if (textareaRef.current) {
                 textareaRef.current.style.height = 'auto';
             }
+        } catch (error) {
+            toast.error('Failed to send message');
+            console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
         }
-        if (selectedFiles.length > 0) {
-            onSendFiles(selectedFiles);
-            setSelectedFiles([]);
-        }
-        setShowToolList(false);
+    };
+
+    const handleSend = () => {
+        if (isLoading) return;
+        handleCombinedSubmission();
     };
 
     // Function to check if file already exists in selected files
@@ -229,9 +293,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             return;
         }
 
-        setSelectedFiles((prev) => [...prev, ...uniqueNewFiles]);
+        // Validate all files including existing ones
+        const allFiles = [...selectedFiles, ...uniqueNewFiles];
+        const validation = validateFiles(allFiles);
+
+        if (!validation.valid) {
+            setFileError(validation.error);
+            setTimeout(() => setFileError(null), 3000);
+            return;
+        }
+
+        setSelectedFiles(allFiles);
         if (fileInputRef.current) {
-            fileInputRef.current.value = ''; // Reset input for same file selection
+            fileInputRef.current.value = '';
         }
     };
 
@@ -254,6 +328,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                     className="text-white"
                                 />
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {voiceBlob && !isRecording && (
+                    <div className="max-w-[50%] mx-auto mb-4">
+                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl p-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-white/70">
+                                    Voice Recording Ready
+                                </span>
+                                <button
+                                    onClick={() => setVoiceBlob(null)}
+                                    className="p-1.5 hover:bg-white/10 rounded-lg transition-all duration-200"
+                                >
+                                    <X
+                                        size={14}
+                                        className="text-white/70"
+                                    />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -503,12 +598,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                 <Tooltip.Trigger asChild>
                                     <button
                                         onClick={handleSend}
-                                        className="p-2 bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-200"
+                                        disabled={isLoading}
+                                        className={`p-2 ${
+                                            isLoading
+                                                ? 'bg-blue-400 cursor-not-allowed'
+                                                : 'bg-blue-600 hover:bg-blue-700'
+                                        } rounded-xl transition-colors duration-200`}
                                     >
-                                        <Send
-                                            size={20}
-                                            className="text-white"
-                                        />
+                                        {isLoading ? (
+                                            <Loader2
+                                                size={20}
+                                                className="text-white animate-spin"
+                                            />
+                                        ) : (
+                                            <Send
+                                                size={20}
+                                                className="text-white"
+                                            />
+                                        )}
                                     </button>
                                 </Tooltip.Trigger>
                                 <Tooltip.Portal>
@@ -516,7 +623,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                         className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
                                         sideOffset={5}
                                     >
-                                        Send message
+                                        {isLoading
+                                            ? 'Processing...'
+                                            : 'Send message'}
                                         <Tooltip.Arrow className="fill-black/75" />
                                     </Tooltip.Content>
                                 </Tooltip.Portal>
