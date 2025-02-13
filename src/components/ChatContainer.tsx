@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
 
@@ -21,8 +21,30 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     onSendFiles,
 }) => {
     const [chatMessages, setChatMessages] = useState<typeof messages>([]);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-    // Remove messageCount state since we'll determine isUser differently
+    // Auto-scroll effect
+    useEffect(() => {
+        const scrollToBottom = () => {
+            if (messagesContainerRef.current) {
+                const scrollElement = messagesContainerRef.current;
+                const scrollTop =
+                    scrollElement.scrollHeight - scrollElement.clientHeight;
+                scrollElement.scrollTo({
+                    top: scrollTop,
+                    behavior: 'smooth',
+                });
+            }
+        };
+
+        // Scroll when messages change
+        scrollToBottom();
+
+        // Also scroll after a small delay to handle dynamic content
+        const timeoutId = setTimeout(scrollToBottom, 100);
+        return () => clearTimeout(timeoutId);
+    }, [chatMessages]);
+
     const handleNewMessage = (content: string, fromAI: boolean = false) => {
         const newMessage = {
             id: crypto.randomUUID(),
@@ -47,7 +69,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
     return (
         <div className="flex flex-col h-full w-7/12 max-h-[80%] animate-fadeIn">
-            <div className="flex-grow overflow-y-auto scroll-smooth custom-scrollbar p-16 space-y-6">
+            <div
+                ref={messagesContainerRef}
+                className="flex-grow overflow-y-auto scroll-smooth custom-scrollbar p-16 space-y-6"
+            >
                 {chatMessages.map((message) => (
                     <Message
                         key={message.id}
