@@ -298,7 +298,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         const validation = validateFiles(allFiles);
 
         if (!validation.valid) {
-            setFileError(validation.error);
+            setFileError(validation.error || null);
             setTimeout(() => setFileError(null), 3000);
             return;
         }
