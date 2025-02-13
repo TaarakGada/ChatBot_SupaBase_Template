@@ -65,83 +65,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="relative">
                 {/* Glassmorphic Sidebar */}
                 <div
-                    className={`fixed top-0 left-0 h-screen w-64 rounded-r-xl
-                    bg-gradient-to-b from-white/30 to-white/10 dark:from-gray-800/30 dark:to-gray-900/10
-                    backdrop-blur-xl backdrop-saturate-150
-                    border-r border-white/20 dark:border-gray-700/30
-                    shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]
+                    className={`fixed top-0 left-0 h-screen w-64 
+                    bg-white/5 dark:bg-black/10
+                    backdrop-blur-2xl backdrop-saturate-200
+                    border-r border-white/10
+                    shadow-[0_0_40px_-15px_rgba(0,0,0,0.3)]
                     transition-transform duration-300 ease-in-out
                     ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}`}
                 >
                     <div className="flex flex-col h-full p-4">
-                        {/* Toggle Button */}
+                        {/* Header with buttons */}
                         <div className="flex justify-between items-center mb-6">
-                            <Tooltip.Root>
-                                <Tooltip.Trigger asChild>
-                                    <button
-                                        onClick={() =>
-                                            setIsCollapsed(!isCollapsed)
-                                        }
-                                        className="p-2 rounded-lg bg-white/10 hover:bg-white/20 dark:bg-gray-800/30 dark:hover:bg-gray-700/50 backdrop-blur-sm transition-all"
-                                    >
-                                        <ChevronLeft
-                                            size={24}
-                                            className="text-gray-700 dark:text-gray-200"
-                                        />
-                                    </button>
-                                </Tooltip.Trigger>
-                                <Tooltip.Portal>
-                                    <Tooltip.Content
-                                        className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                                        sideOffset={5}
-                                    >
-                                        Collapse sidebar
-                                        <Tooltip.Arrow className="fill-black/75" />
-                                    </Tooltip.Content>
-                                </Tooltip.Portal>
-                            </Tooltip.Root>
+                            <button
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                            >
+                                <ChevronLeft
+                                    size={20}
+                                    className="text-white"
+                                />
+                            </button>
 
-                            <Tooltip.Root>
-                                <Tooltip.Trigger asChild>
-                                    <button
-                                        onClick={addNewChat}
-                                        className="flex items-center px-4 py-2 rounded-lg 
-                                        bg-blue-500/20 hover:bg-blue-500/30 
-                                        dark:bg-blue-500/10 dark:hover:bg-blue-500/20 
-                                        backdrop-blur-sm transition-all"
-                                    >
-                                        <Plus
-                                            size={20}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-gray-700 dark:text-gray-200">
-                                            New Chat
-                                        </span>
-                                    </button>
-                                </Tooltip.Trigger>
-                                <Tooltip.Portal>
-                                    <Tooltip.Content
-                                        className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                                        sideOffset={5}
-                                    >
-                                        Start a new chat
-                                        <Tooltip.Arrow className="fill-black/75" />
-                                    </Tooltip.Content>
-                                </Tooltip.Portal>
-                            </Tooltip.Root>
+                            <button
+                                onClick={addNewChat}
+                                className="flex items-center gap-2 px-3 py-1.5 
+                                             bg-white/10 hover:bg-white/20 
+                                             rounded-lg transition-all duration-200
+                                             border border-white/10"
+                            >
+                                <Plus
+                                    size={16}
+                                    className="text-white"
+                                />
+                                <span className="text-sm font-medium text-white">
+                                    New Chat
+                                </span>
+                            </button>
                         </div>
 
                         {/* Chat List */}
-                        <div className="flex-grow overflow-y-auto">
+                        <div className="flex-grow overflow-y-auto space-y-2">
                             {chats.map((chat) => (
                                 <div
                                     key={chat.id}
-                                    className={`flex items-center mb-2 p-2 rounded-lg group transition-all cursor-pointer
-                                    ${
-                                        chat.id === activeChatId
-                                            ? 'bg-blue-500/20 dark:bg-blue-500/10 backdrop-blur-sm'
-                                            : 'hover:bg-white/10 dark:hover:bg-gray-800/30'
-                                    }`}
+                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer
+                                                ${
+                                                    chat.id === activeChatId
+                                                        ? 'bg-white/15 border border-white/20'
+                                                        : 'hover:bg-white/10'
+                                                }`}
                                     onClick={() => setActiveChatId(chat.id)}
                                 >
                                     {editingId === chat.id ? (
@@ -161,72 +133,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                     e.currentTarget.value
                                                 )
                                             }
-                                            className="flex-grow px-2 py-1 bg-white/20 dark:bg-gray-800/50 
-                                            rounded border border-white/30 dark:border-gray-700/30 
-                                            backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                            className="flex-grow px-2 py-1 bg-white/10 
+                                                     text-white placeholder-white/50
+                                                     rounded border border-white/20 
+                                                     focus:outline-none focus:border-white/30"
                                             autoFocus
                                         />
                                     ) : (
                                         <>
-                                            <span className="flex-grow truncate text-gray-700 dark:text-gray-200">
+                                            <span className="flex-grow truncate text-white font-medium">
                                                 {chat.name}
                                             </span>
-                                            <div className="hidden group-hover:flex items-center">
-                                                <Tooltip.Root>
-                                                    <Tooltip.Trigger asChild>
-                                                        <button
-                                                            onClick={() =>
-                                                                setEditingId(
-                                                                    chat.id
-                                                                )
-                                                            }
-                                                            className="p-1 rounded-lg bg-white/10 hover:bg-white/20 
-                                                            dark:bg-gray-800/30 dark:hover:bg-gray-700/50 mr-1 transition-all"
-                                                        >
-                                                            <Edit2
-                                                                size={16}
-                                                                className="text-gray-600 dark:text-gray-300"
-                                                            />
-                                                        </button>
-                                                    </Tooltip.Trigger>
-                                                    <Tooltip.Portal>
-                                                        <Tooltip.Content
-                                                            className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                                                            sideOffset={5}
-                                                        >
-                                                            Rename chat
-                                                            <Tooltip.Arrow className="fill-black/75" />
-                                                        </Tooltip.Content>
-                                                    </Tooltip.Portal>
-                                                </Tooltip.Root>
-
-                                                <Tooltip.Root>
-                                                    <Tooltip.Trigger asChild>
-                                                        <button
-                                                            onClick={() =>
-                                                                deleteChat(
-                                                                    chat.id
-                                                                )
-                                                            }
-                                                            className="p-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 
-                                                            dark:bg-red-500/5 dark:hover:bg-red-500/10 transition-all"
-                                                        >
-                                                            <Trash2
-                                                                size={16}
-                                                                className="text-red-500 dark:text-red-400"
-                                                            />
-                                                        </button>
-                                                    </Tooltip.Trigger>
-                                                    <Tooltip.Portal>
-                                                        <Tooltip.Content
-                                                            className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                                                            sideOffset={5}
-                                                        >
-                                                            Delete chat
-                                                            <Tooltip.Arrow className="fill-black/75" />
-                                                        </Tooltip.Content>
-                                                    </Tooltip.Portal>
-                                                </Tooltip.Root>
+                                            <div className="flex items-center gap-1 ml-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingId(chat.id);
+                                                    }}
+                                                    className="p-1.5 rounded-lg hover:bg-white/10 transition-all"
+                                                >
+                                                    <Edit2
+                                                        size={14}
+                                                        className="text-white/70"
+                                                    />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteChat(chat.id);
+                                                    }}
+                                                    className="p-1.5 rounded-lg hover:bg-red-500/20 transition-all"
+                                                >
+                                                    <Trash2
+                                                        size={14}
+                                                        className="text-red-400"
+                                                    />
+                                                </button>
                                             </div>
                                         </>
                                     )}
@@ -235,69 +177,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
 
                         {/* Footer */}
-                        <div className="mt-auto pt-4 border-t border-white/20 dark:border-gray-700/30">
-                            <div className="flex justify-between items-center">
-                                <Tooltip.Root>
-                                    <Tooltip.Trigger asChild>
-                                        <button
-                                            onClick={() => {
-                                                /* Add logout logic */
-                                            }}
-                                            className="flex items-center justify-center p-2 rounded-lg
-                                            bg-white/10 hover:bg-white/20 dark:bg-gray-800/30 dark:hover:bg-gray-700/50
-                                            backdrop-blur-sm transition-all"
-                                        >
-                                            <LogOut
-                                                size={20}
-                                                className="text-gray-700 dark:text-gray-200"
-                                            />
-                                        </button>
-                                    </Tooltip.Trigger>
-                                    <Tooltip.Portal>
-                                        <Tooltip.Content
-                                            className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                                            sideOffset={5}
-                                            side="right"
-                                        >
-                                            Sign out from your account
-                                            <Tooltip.Arrow className="fill-black/75" />
-                                        </Tooltip.Content>
-                                    </Tooltip.Portal>
-                                </Tooltip.Root>
-                            </div>
+                        <div className="mt-auto pt-4 border-t border-white/10">
+                            <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                                <LogOut
+                                    size={20}
+                                    className="text-white/80 hover:text-white"
+                                />
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Collapsed Button (When Sidebar is Hidden) */}
                 {isCollapsed && (
-                    <div className="fixed top-5 left-2">
-                        <Tooltip.Root>
-                            <Tooltip.Trigger asChild>
-                                <button
-                                    onClick={() => setIsCollapsed(!isCollapsed)}
-                                    className="p-2 rounded-lg 
-                                    bg-white/30 hover:bg-white/40 
-                                    dark:bg-gray-800/30 dark:hover:bg-gray-700/50 
-                                    backdrop-blur-sm transition-all"
-                                >
-                                    <Menu
-                                        size={24}
-                                        className="text-gray-700 dark:text-gray-200"
-                                    />
-                                </button>
-                            </Tooltip.Trigger>
-                            <Tooltip.Portal>
-                                <Tooltip.Content
-                                    className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                                    sideOffset={5}
-                                >
-                                    Expand sidebar
-                                    <Tooltip.Arrow className="fill-black/75" />
-                                </Tooltip.Content>
-                            </Tooltip.Portal>
-                        </Tooltip.Root>
-                    </div>
+                    <button
+                        onClick={() => setIsCollapsed(false)}
+                        className="fixed top-5 left-2 p-2 
+                                     bg-white/10 hover:bg-white/20
+                                     backdrop-blur-lg rounded-lg 
+                                     transition-all duration-200"
+                    >
+                        <Menu
+                            size={20}
+                            className="text-white"
+                        />
+                    </button>
                 )}
             </div>
         </Tooltip.Provider>

@@ -68,7 +68,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full w-7/12 max-h-[80%] animate-fadeIn">
+        <div
+            className="flex flex-col h-full w-7/12 max-h-[80%] 
+                        bg-transparent rounded-2xl overflow-hidden"
+        >
             <div
                 ref={messagesContainerRef}
                 className="flex-grow overflow-y-auto scroll-smooth custom-scrollbar p-16 space-y-6"

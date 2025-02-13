@@ -121,7 +121,7 @@ function App() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100 dark:bg-black text-gray-900 dark:text-white">
+        <div className="flex h-screen bg-neutral-900 text-white">
             <Sidebar
                 isCollapsed={isCollapsed}
                 setIsCollapsed={setIsCollapsed}

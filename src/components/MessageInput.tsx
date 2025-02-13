@@ -516,7 +516,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 )}
 
                 <div className="relative max-w-[50%] mx-auto">
-                    <div className="relative bg-black/20 backdrop-blur-xl backdrop-saturate-150 border border-white/10 rounded-2xl shadow-lg overflow-hidden transition-all duration-300">
+                    <div
+                        className="relative bg-neutral-900/50 
+                      backdrop-blur-xl backdrop-saturate-150 
+                      border border-neutral-200/10
+                      rounded-2xl shadow-xl overflow-hidden"
+                    >
                         <div className="w-full px-4 pt-4 pb-2">
                             <textarea
                                 ref={textareaRef}
@@ -524,12 +529,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                 onChange={handleChange}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Type a message..."
-                                className="w-full bg-transparent text-white placeholder-white/50 focus:outline-none resize-none min-h-[24px] max-h-[200px] transition-all duration-200"
+                                className="w-full bg-transparent px-4 pt-4
+                         text-white placeholder-neutral-400
+                         focus:outline-none"
                                 style={{ overflow: 'hidden' }}
                             />
                         </div>
 
-                        <div className="flex items-center gap-2 px-2 py-2 border-t border-white/10">
+                        <div
+                            className="flex items-center gap-2 px-3 py-3 
+                          border-t border-neutral-200/10
+                          bg-neutral-900/50"
+                        >
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -545,7 +556,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                         onClick={() =>
                                             fileInputRef.current?.click()
                                         }
-                                        className="p-2 hover:bg-white/10 rounded-xl transition-colors duration-200"
+                                        className="p-2.5 text-neutral-400 
+                               hover:bg-neutral-800 hover:text-neutral-200 
+                               rounded-xl transition-colors"
                                     >
                                         <Paperclip
                                             size={20}
@@ -572,7 +585,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                                 ? startRecording
                                                 : stopRecording
                                         }
-                                        className="p-2 hover:bg-white/10 rounded-xl transition-colors duration-200"
+                                        className="p-2.5 text-neutral-400 
+                               hover:bg-neutral-800 hover:text-neutral-200 
+                               rounded-xl transition-colors"
                                     >
                                         <Mic
                                             size={20}
@@ -599,11 +614,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                     <button
                                         onClick={handleSend}
                                         disabled={isLoading}
-                                        className={`p-2 ${
+                                        className={`p-2.5 ${
                                             isLoading
-                                                ? 'bg-blue-400 cursor-not-allowed'
-                                                : 'bg-blue-600 hover:bg-blue-700'
-                                        } rounded-xl transition-colors duration-200`}
+                                                ? 'bg-blue-400/50 cursor-not-allowed'
+                                                : 'bg-blue-500/80 hover:bg-blue-600/80'
+                                        } rounded-xl text-white shadow-sm transition-all duration-200`}
                                     >
                                         {isLoading ? (
                                             <Loader2

@@ -23,7 +23,12 @@ interface MessageProps {
 }
 
 const AudioMessage = ({ url, name }: { url: string; name: string }) => (
-    <div className="flex items-center gap-3 p-2 bg-black/20 rounded-lg">
+    <div
+        className="flex items-center gap-3 p-3 
+                  bg-neutral-900/50 
+                  border border-neutral-200/10
+                  rounded-xl"
+    >
         <PlayCircle
             size={24}
             className="text-blue-400 flex-shrink-0"
@@ -169,14 +174,10 @@ export const Message: React.FC<MessageProps> = ({
                 <div
                     className={`max-w-[70%] min-w-[240px] ${
                         isUser
-                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
-                            : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-900 dark:text-white'
-                    } p-4 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 backdrop-blur-sm
-                    border ${
-                        isUser
-                            ? 'border-blue-400/20'
-                            : 'border-gray-200/20 dark:border-gray-700/20'
-                    }`}
+                            ? 'bg-blue-500/20 backdrop-blur-sm border-blue-500/30 text-white'
+                            : 'bg-neutral-100/10 backdrop-blur-sm border-neutral-200/10 text-neutral-100'
+                    } p-4 rounded-2xl shadow-lg hover:shadow-xl 
+                        border transition-all duration-300`}
                 >
                     {typeof content === 'string' ? (
                         <TextMessage content={content} />
