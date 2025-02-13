@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import {
     Copy,
     Volume2,
     FileIcon,
-    PlayCircle,
-    Download,
     Image as ImageIcon,
     Mic,
+    PlayCircle,
 } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import toast from 'react-hot-toast';
@@ -44,73 +43,6 @@ const AudioMessage = ({ url, name }: { url: string; name: string }) => (
     </div>
 );
 
-const FileMessage = ({ url, name }: { url: string; name: string }) => {
-    const isImage = name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-
-    return isImage ? (
-        <div className="flex flex-col gap-2">
-            <img
-                src={url}
-                alt={name}
-                className="max-w-[300px] rounded-lg shadow-lg"
-            />
-            <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
-                <div className="flex items-center gap-2">
-                    <ImageIcon
-                        size={16}
-                        className="text-blue-400"
-                    />
-                    <span className="text-sm truncate">{name}</span>
-                </div>
-                <DownloadButton
-                    url={url}
-                    name={name}
-                />
-            </div>
-        </div>
-    ) : (
-        <div className="flex items-center gap-3 p-3 bg-black/20 rounded-lg group max-w-[300px]">
-            <FileIcon
-                size={24}
-                className="text-blue-400 flex-shrink-0"
-            />
-            <div className="flex-grow min-w-0">
-                <div className="text-sm truncate">{name}</div>
-            </div>
-            <DownloadButton
-                url={url}
-                name={name}
-            />
-        </div>
-    );
-};
-
-const DownloadButton = ({ url, name }: { url: string; name: string }) => (
-    <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-            <a
-                href={url}
-                download={name}
-                className="p-1.5 opacity-70 hover:opacity-100 hover:bg-white/10 rounded-lg transition-all duration-200"
-            >
-                <Download
-                    size={16}
-                    className="text-white"
-                />
-            </a>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-            <Tooltip.Content
-                className="bg-black/75 text-white px-2 py-1 rounded text-xs z-[9999]"
-                sideOffset={5}
-            >
-                Download file
-                <Tooltip.Arrow className="fill-black/75" />
-            </Tooltip.Content>
-        </Tooltip.Portal>
-    </Tooltip.Root>
-);
-
 const VoiceRecordingPreview = ({ size }: { size: string }) => (
     <div className="flex items-center gap-3 p-3 bg-black/20 rounded-lg mb-2">
         <div className="flex items-center gap-2">
@@ -124,119 +56,91 @@ const VoiceRecordingPreview = ({ size }: { size: string }) => (
     </div>
 );
 
-const FilePreview = ({ name, type }: { name: string; type: string }) => {
+const FilePreview = ({ name }: { name: string }) => {
     const isImage = name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+    const extension = name.split('.').pop()?.toUpperCase() || '';
 
     if (isImage) {
         return (
-            <div className="flex flex-col gap-2 mb-2">
-                <div className="relative group">
-                    <img
-                        src={`/path/to/images/${name}`}
-                        alt={name}
-                        className="max-w-[300px] rounded-lg shadow-lg"
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
-                        <Download
-                            size={24}
-                            className="text-white"
-                        />
-                    </div>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
-                    <div className="flex items-center gap-2">
-                        <ImageIcon
-                            size={16}
-                            className="text-blue-400"
-                        />
-                        <span className="text-sm truncate">{name}</span>
-                    </div>
-                </div>
+            <div className="flex items-center gap-2 p-2 bg-black/20 rounded-lg">
+                <ImageIcon
+                    size={16}
+                    className="text-blue-400"
+                />
+                <span className="text-sm text-white/70 truncate flex-1">
+                    {name}
+                </span>
+                <span className="text-xs text-white/50">{extension}</span>
             </div>
         );
     }
 
     return (
-        <div className="flex items-center gap-3 p-3 bg-black/20 rounded-lg mb-2">
+        <div className="flex items-center gap-2 p-2 bg-black/20 rounded-lg">
             <FileIcon
-                size={18}
+                size={16}
                 className="text-blue-400"
             />
-            <div className="flex-1 min-w-0">
-                <div className="text-sm truncate">{name}</div>
-                <div className="text-xs text-white/50">{type}</div>
-            </div>
-            <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                        <Download
-                            size={16}
-                            className="text-white/70"
-                        />
-                    </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                    <Tooltip.Content
-                        className="bg-black/75 text-white px-2 py-1 rounded text-xs"
-                        sideOffset={5}
-                    >
-                        Download file
-                        <Tooltip.Arrow className="fill-black/75" />
-                    </Tooltip.Content>
-                </Tooltip.Portal>
-            </Tooltip.Root>
+            <span className="text-sm text-white/70 truncate flex-1">
+                {name}
+            </span>
+            <span className="text-xs text-white/50">{extension}</span>
         </div>
     );
 };
 
+const FileListPreview = ({ files }: { files: string[] }) => (
+    <div className="space-y-2 mb-2">
+        <div className="text-sm font-medium text-white/90 mb-2">Files</div>
+        <div className="space-y-1">
+            {files.map((file, idx) => (
+                <FilePreview
+                    key={idx}
+                    name={file}
+                />
+            ))}
+        </div>
+    </div>
+);
+
 const TextMessage = ({ content }: { content: string }) => {
     const lines = content.split('\n');
-    return (
-        <div className="space-y-2">
-            {lines.map((line, index) => {
-                if (line.startsWith('[Voice Recording:')) {
-                    const size =
-                        line
-                            .match(/\[(Voice Recording: .+)\]/)?.[1]
-                            .split(': ')[1] || '';
-                    return (
-                        <VoiceRecordingPreview
-                            key={index}
-                            size={size}
-                        />
-                    );
-                }
-                if (line.startsWith('[Attached files:')) {
-                    const files =
-                        line
-                            .match(/\[Attached files: (.+)\]/)?.[1]
-                            .split(', ') || [];
-                    return (
-                        <div key={index}>
-                            {files.map((file, idx) => (
-                                <FilePreview
-                                    key={idx}
-                                    name={file}
-                                    type={
-                                        file.split('.').pop()?.toUpperCase() ||
-                                        ''
-                                    }
-                                />
-                            ))}
-                        </div>
-                    );
-                }
-                return (
-                    <p
-                        key={index}
-                        className="break-words whitespace-pre-wrap text-sm"
-                    >
-                        {line}
-                    </p>
-                );
-            })}
-        </div>
-    );
+    const messageContent: JSX.Element[] = [];
+    let currentFiles: string[] = [];
+
+    lines.forEach((line, index) => {
+        if (line.startsWith('[Voice Recording:')) {
+            const size =
+                line.match(/\[(Voice Recording: .+)\]/)?.[1].split(': ')[1] ||
+                '';
+            messageContent.push(
+                <VoiceRecordingPreview
+                    key={`voice-${index}`}
+                    size={size}
+                />
+            );
+        } else if (line.startsWith('[Attached files:')) {
+            currentFiles =
+                line.match(/\[Attached files: (.+)\]/)?.[1].split(', ') || [];
+            messageContent.push(
+                <FileListPreview
+                    key={`files-${index}`}
+                    files={currentFiles}
+                />
+            );
+        } else if (line.trim()) {
+            messageContent.push(
+                <p
+                    key={index}
+                    className="break-words whitespace-pre-wrap text-sm"
+                >
+                    {line}
+                </p>
+            );
+        }
+    });
+
+    return <div className="space-y-2">{messageContent}</div>;
 };
 
 export const Message: React.FC<MessageProps> = ({
@@ -282,10 +186,7 @@ export const Message: React.FC<MessageProps> = ({
                             name={content.name}
                         />
                     ) : (
-                        <FileMessage
-                            url={content.url}
-                            name={content.name}
-                        />
+                        <FilePreview name={content.name} />
                     )}
 
                     <div
