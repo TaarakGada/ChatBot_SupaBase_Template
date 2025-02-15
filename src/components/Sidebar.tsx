@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Plus, LogOut, Trash2, Edit2, Menu } from 'lucide-react';
-import * as Tooltip from '@radix-ui/react-tooltip';
+import { Tooltip } from './common/Tooltip';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
 
 interface Chat {
     id: string;
@@ -61,9 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     return (
-        <Tooltip.Provider delayDuration={200}>
+        <TooltipProvider>
             <div className="relative">
-                {/* Glassmorphic Sidebar */}
                 <div
                     className={`fixed top-0 left-0 h-screen w-64 
                     bg-white/5 dark:bg-black/10
@@ -74,33 +74,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}`}
                 >
                     <div className="flex flex-col h-full p-4">
-                        {/* Header with buttons */}
                         <div className="flex justify-between items-center mb-6">
-                            <button
-                                onClick={() => setIsCollapsed(!isCollapsed)}
-                                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                            >
-                                <ChevronLeft
-                                    size={20}
-                                    className="text-white"
-                                />
-                            </button>
+                            <Tooltip content="Collapse Sidebar">
+                                <button
+                                    onClick={() => setIsCollapsed(!isCollapsed)}
+                                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                                >
+                                    <ChevronLeft
+                                        size={20}
+                                        className="text-white"
+                                    />
+                                </button>
+                            </Tooltip>
 
-                            <button
-                                onClick={addNewChat}
-                                className="flex items-center gap-2 px-3 py-1.5 
-                                             bg-white/10 hover:bg-white/20 
-                                             rounded-lg transition-all duration-200
-                                             border border-white/10"
-                            >
-                                <Plus
-                                    size={16}
-                                    className="text-white"
-                                />
-                                <span className="text-sm font-medium text-white">
-                                    New Chat
-                                </span>
-                            </button>
+                            <Tooltip content="Create New Chat">
+                                <button
+                                    onClick={addNewChat}
+                                    className="flex items-center gap-2 px-3 py-1.5 
+                                         bg-white/10 hover:bg-white/20 
+                                         rounded-lg transition-all duration-200
+                                         border border-white/10"
+                                >
+                                    <Plus
+                                        size={16}
+                                        className="text-white"
+                                    />
+                                    <span className="text-sm font-medium text-white">
+                                        New Chat
+                                    </span>
+                                </button>
+                            </Tooltip>
                         </div>
 
                         {/* Chat List */}
@@ -109,11 +112,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <div
                                     key={chat.id}
                                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer
-                                                ${
-                                                    chat.id === activeChatId
-                                                        ? 'bg-white/15 border border-white/20'
-                                                        : 'hover:bg-white/10'
-                                                }`}
+                                        ${
+                                            chat.id === activeChatId
+                                                ? 'bg-white/15 border border-white/20'
+                                                : 'hover:bg-white/10'
+                                        }`}
                                     onClick={() => setActiveChatId(chat.id)}
                                 >
                                     {editingId === chat.id ? (
@@ -145,30 +148,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                 {chat.name}
                                             </span>
                                             <div className="flex items-center gap-1 ml-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setEditingId(chat.id);
-                                                    }}
-                                                    className="p-1.5 rounded-lg hover:bg-white/10 transition-all"
-                                                >
-                                                    <Edit2
-                                                        size={14}
-                                                        className="text-white/70"
-                                                    />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteChat(chat.id);
-                                                    }}
-                                                    className="p-1.5 rounded-lg hover:bg-red-500/20 transition-all"
-                                                >
-                                                    <Trash2
-                                                        size={14}
-                                                        className="text-red-400"
-                                                    />
-                                                </button>
+                                                <Tooltip content="Edit Chat Name">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingId(
+                                                                chat.id
+                                                            );
+                                                        }}
+                                                        className="p-1.5 rounded-lg hover:bg-white/10 transition-all"
+                                                    >
+                                                        <Edit2
+                                                            size={14}
+                                                            className="text-white/70"
+                                                        />
+                                                    </button>
+                                                </Tooltip>
+                                                <Tooltip content="Delete Chat">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteChat(chat.id);
+                                                        }}
+                                                        className="p-1.5 rounded-lg hover:bg-red-500/20 transition-all"
+                                                    >
+                                                        <Trash2
+                                                            size={14}
+                                                            className="text-red-400"
+                                                        />
+                                                    </button>
+                                                </Tooltip>
                                             </div>
                                         </>
                                     )}
@@ -176,35 +185,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             ))}
                         </div>
 
-                        {/* Footer */}
                         <div className="mt-auto pt-4 border-t border-white/10">
-                            <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                                <LogOut
-                                    size={20}
-                                    className="text-white/80 hover:text-white"
-                                />
-                            </button>
+                            <Tooltip content="Sign Out">
+                                <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                                    <LogOut
+                                        size={20}
+                                        className="text-white/80 hover:text-white"
+                                    />
+                                </button>
+                            </Tooltip>
                         </div>
                     </div>
                 </div>
 
-                {/* Collapsed Button (When Sidebar is Hidden) */}
                 {isCollapsed && (
-                    <button
-                        onClick={() => setIsCollapsed(false)}
-                        className="fixed top-5 left-2 p-2 
-                                     bg-white/10 hover:bg-white/20
-                                     backdrop-blur-lg rounded-lg 
-                                     transition-all duration-200"
-                    >
-                        <Menu
-                            size={20}
-                            className="text-white"
-                        />
-                    </button>
+                    <Tooltip content="Expand Sidebar">
+                        <button
+                            onClick={() => setIsCollapsed(false)}
+                            className="fixed top-5 left-2 p-2 
+                                 bg-white/10 hover:bg-white/20
+                                 backdrop-blur-lg rounded-lg 
+                                 transition-all duration-200"
+                        >
+                            <Menu
+                                size={20}
+                                className="text-white"
+                            />
+                        </button>
+                    </Tooltip>
                 )}
             </div>
-        </Tooltip.Provider>
+        </TooltipProvider>
     );
 };
 

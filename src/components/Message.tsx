@@ -7,7 +7,8 @@ import {
     Mic,
     PlayCircle,
 } from 'lucide-react';
-import * as Tooltip from '@radix-ui/react-tooltip';
+import * as TooltipProvider from '@radix-ui/react-tooltip';
+import { Tooltip } from './common/Tooltip';
 import toast from 'react-hot-toast';
 
 interface MessageProps {
@@ -165,7 +166,7 @@ export const Message: React.FC<MessageProps> = ({
     };
 
     return (
-        <Tooltip.Provider delayDuration={200}>
+        <TooltipProvider.Provider>
             <div
                 className={`flex ${
                     isUser ? 'justify-end' : 'justify-start'
@@ -198,61 +199,35 @@ export const Message: React.FC<MessageProps> = ({
                         <span className="opacity-75">{timestamp}</span>
                         {typeof content === 'string' && (
                             <div className="flex items-center gap-1">
-                                {!isUser && ( // Only show speak button for AI messages
-                                    <Tooltip.Root>
-                                        <Tooltip.Trigger asChild>
-                                            <button
-                                                onClick={() =>
-                                                    speakText(content)
-                                                }
-                                                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                                            >
-                                                <Volume2
-                                                    size={14}
-                                                    className="text-white/70"
-                                                />
-                                            </button>
-                                        </Tooltip.Trigger>
-                                        <Tooltip.Portal>
-                                            <Tooltip.Content
-                                                className="bg-black/75 text-white px-2 py-1 rounded text-xs"
-                                                sideOffset={5}
-                                            >
-                                                Speak text
-                                                <Tooltip.Arrow className="fill-black/75" />
-                                            </Tooltip.Content>
-                                        </Tooltip.Portal>
-                                    </Tooltip.Root>
-                                )}
-                                <Tooltip.Root>
-                                    <Tooltip.Trigger asChild>
+                                {!isUser && (
+                                    <Tooltip content="Speak text">
                                         <button
-                                            onClick={() =>
-                                                copyToClipboard(content)
-                                            }
+                                            onClick={() => speakText(content)}
                                             className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
                                         >
-                                            <Copy
+                                            <Volume2
                                                 size={14}
                                                 className="text-white/70"
                                             />
                                         </button>
-                                    </Tooltip.Trigger>
-                                    <Tooltip.Portal>
-                                        <Tooltip.Content
-                                            className="bg-black/75 text-white px-2 py-1 rounded text-xs"
-                                            sideOffset={5}
-                                        >
-                                            Copy to clipboard
-                                            <Tooltip.Arrow className="fill-black/75" />
-                                        </Tooltip.Content>
-                                    </Tooltip.Portal>
-                                </Tooltip.Root>
+                                    </Tooltip>
+                                )}
+                                <Tooltip content="Copy to clipboard">
+                                    <button
+                                        onClick={() => copyToClipboard(content)}
+                                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                                    >
+                                        <Copy
+                                            size={14}
+                                            className="text-white/70"
+                                        />
+                                    </button>
+                                </Tooltip>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </Tooltip.Provider>
+        </TooltipProvider.Provider>
     );
 };
