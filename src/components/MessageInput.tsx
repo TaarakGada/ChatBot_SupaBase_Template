@@ -1,20 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Send, Paperclip, Loader2, X } from 'lucide-react';
 import * as TooltipProvider from '@radix-ui/react-tooltip';
-import { Tooltip } from './common/Tooltip';
+import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tools } from '../constants/messageInput';
 import { formatFileSize } from '../utils/fileUtils';
 import { useAudioRecording } from '../hooks/useAudioRecording';
 import { useFileHandling } from '../hooks/useFileHandling';
+import { MessageInputProps } from '../types/messageInput';
+import { ActionButtons } from './ActionButtons';
+import { ToolList } from './ToolList';
 import RecordingIndicator from './RecordingIndicator';
 import FileList from './FileList';
-
-interface MessageInputProps {
-    onSendMessage: (message: string) => void;
-    onSendVoice: (blob: Blob) => void;
-    onSendFiles: (files: File[]) => void;
-}
 
 export const MessageInput: React.FC<MessageInputProps> = ({
     onSendMessage,
@@ -27,6 +23,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const [selectedToolIndex, setSelectedToolIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
         isRecording,
@@ -43,9 +40,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         fileError,
         isFileListCollapsed,
         setIsFileListCollapsed,
-        fileInputRef,
-        handleFileSelection,
+        fileInputRef: _,
+        handleFileSelection: __,
     } = useFileHandling();
+
+    const handleFileSelection = (files: FileList | null) => {
+        if (files) {
+            const fileArray = Array.from(files);
+            setSelectedFiles((prev) => [...prev, ...fileArray]);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''; // Reset the input
+            }
+        }
+    };
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -202,6 +209,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                     </div>
                 )}
 
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => handleFileSelection(e.target.files)}
+                    className="hidden"
+                    multiple
+                />
+
                 <FileList
                     selectedFiles={selectedFiles}
                     fileError={fileError}
@@ -211,12 +226,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 />
 
                 <div className="relative max-w-[50%] mx-auto">
-                    <div
-                        className="relative bg-neutral-900/50 
-                      backdrop-blur-xl backdrop-saturate-150 
-                      border border-neutral-200/10
-                      rounded-2xl shadow-xl overflow-hidden"
-                    >
+                    <div className="relative bg-neutral-900/50 backdrop-blur-xl backdrop-saturate-150 border border-neutral-200/10 rounded-2xl shadow-xl overflow-hidden">
                         <div className="w-full px-4 pt-4 pb-2">
                             <textarea
                                 ref={textareaRef}
@@ -224,122 +234,28 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                 onChange={handleChange}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Type a message..."
-                                className="w-full bg-transparent px-4 pt-4
-                         text-white placeholder-neutral-400
-                         focus:outline-none"
+                                className="w-full bg-transparent px-4 pt-4 text-white placeholder-neutral-400 focus:outline-none"
                                 style={{ overflow: 'hidden' }}
                             />
                         </div>
 
-                        <div
-                            className="flex items-center gap-2 px-3 py-3 
-                          border-t border-neutral-200/10
-                          bg-neutral-900/50"
-                        >
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={(e) =>
-                                    handleFileSelection(e.target.files)
-                                }
-                                className="hidden"
-                                multiple
-                            />
-                            <Tooltip content="Attach files">
-                                <button
-                                    onClick={() =>
-                                        fileInputRef.current?.click()
-                                    }
-                                    className="p-2.5 text-neutral-400 
-                               hover:bg-neutral-800 hover:text-neutral-200 
-                               rounded-xl transition-colors"
-                                >
-                                    <Paperclip
-                                        size={20}
-                                        className="text-white/70"
-                                    />
-                                </button>
-                            </Tooltip>
-
-                            <Tooltip
-                                content={
-                                    isRecording
-                                        ? 'Stop recording'
-                                        : 'Start recording'
-                                }
-                            >
-                                <button
-                                    onClick={
-                                        !isRecording
-                                            ? startRecording
-                                            : stopRecording
-                                    }
-                                    className="p-2.5 text-neutral-400 
-                               hover:bg-neutral-800 hover:text-neutral-200 
-                               rounded-xl transition-colors"
-                                >
-                                    <Mic
-                                        size={20}
-                                        className="text-white/70"
-                                    />
-                                </button>
-                            </Tooltip>
-
-                            <div className="flex-grow" />
-                            <Tooltip
-                                content={
-                                    isLoading ? 'Processing...' : 'Send message'
-                                }
-                            >
-                                <button
-                                    onClick={handleSend}
-                                    disabled={isLoading}
-                                    className={`p-2.5 ${
-                                        isLoading
-                                            ? 'bg-blue-400/50 cursor-not-allowed'
-                                            : 'bg-blue-500/80 hover:bg-blue-600/80'
-                                    } rounded-xl text-white shadow-sm transition-all duration-200`}
-                                >
-                                    {isLoading ? (
-                                        <Loader2
-                                            size={20}
-                                            className="text-white animate-spin"
-                                        />
-                                    ) : (
-                                        <Send
-                                            size={20}
-                                            className="text-white"
-                                        />
-                                    )}
-                                </button>
-                            </Tooltip>
-                        </div>
+                        <ActionButtons
+                            isLoading={isLoading}
+                            isRecording={isRecording}
+                            handleSend={handleSend}
+                            startRecording={startRecording}
+                            stopRecording={stopRecording}
+                            onFileClick={() => fileInputRef.current?.click()}
+                        />
                     </div>
 
-                    {showToolList && (
-                        <div className="absolute bottom-full left-2 mb-2 w-64 bg-black/30 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg overflow-hidden transition-all duration-200">
-                            <div className="py-1">
-                                {filteredTools.map((tool, index) => (
-                                    <button
-                                        key={tool.id}
-                                        className={`w-full px-4 py-2 flex items-center gap-3 text-left text-white transition-colors duration-200 ${
-                                            index === selectedToolIndex
-                                                ? 'bg-white/10'
-                                                : 'hover:bg-white/5'
-                                        }`}
-                                        onClick={() => insertTool(tool.id)}
-                                    >
-                                        <span className="text-lg">
-                                            {tool.icon}
-                                        </span>
-                                        <span className="flex-1">
-                                            {tool.name}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    <ToolList
+                        message={message}
+                        showToolList={showToolList}
+                        selectedToolIndex={selectedToolIndex}
+                        filteredTools={filteredTools}
+                        onToolSelect={insertTool}
+                    />
                 </div>
             </div>
         </TooltipProvider.Provider>

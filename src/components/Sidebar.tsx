@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Plus, LogOut, Trash2, Edit2, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Tooltip } from './common/Tooltip';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
+import { SidebarHeader } from './SidebarHeader';
+import { ChatListItem } from './ChatListItem';
+import { SidebarFooter } from './SidebarFooter';
 
 interface Chat {
     id: string;
@@ -46,9 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             setChats([newChat]);
             setActiveChatId(newChat.id);
         } else {
-            const nextChat = newChats[0];
-            setActiveChatId(nextChat.id);
             setChats(newChats);
+            setActiveChatId(newChats[0].id);
         }
     };
 
@@ -74,127 +76,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}`}
                 >
                     <div className="flex flex-col h-full p-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <Tooltip content="Collapse Sidebar">
-                                <button
-                                    onClick={() => setIsCollapsed(!isCollapsed)}
-                                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                                >
-                                    <ChevronLeft
-                                        size={20}
-                                        className="text-white"
-                                    />
-                                </button>
-                            </Tooltip>
+                        <SidebarHeader
+                            onCollapse={() => setIsCollapsed(!isCollapsed)}
+                            onNewChat={addNewChat}
+                        />
 
-                            <Tooltip content="Create New Chat">
-                                <button
-                                    onClick={addNewChat}
-                                    className="flex items-center gap-2 px-3 py-1.5 
-                                         bg-white/10 hover:bg-white/20 
-                                         rounded-lg transition-all duration-200
-                                         border border-white/10"
-                                >
-                                    <Plus
-                                        size={16}
-                                        className="text-white"
-                                    />
-                                    <span className="text-sm font-medium text-white">
-                                        New Chat
-                                    </span>
-                                </button>
-                            </Tooltip>
-                        </div>
-
-                        {/* Chat List */}
                         <div className="flex-grow overflow-y-auto space-y-2">
                             {chats.map((chat) => (
-                                <div
+                                <ChatListItem
                                     key={chat.id}
-                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer
-                                        ${
-                                            chat.id === activeChatId
-                                                ? 'bg-white/15 border border-white/20'
-                                                : 'hover:bg-white/10'
-                                        }`}
-                                    onClick={() => setActiveChatId(chat.id)}
-                                >
-                                    {editingId === chat.id ? (
-                                        <input
-                                            type="text"
-                                            defaultValue={chat.name}
-                                            onBlur={(e) =>
-                                                renameChat(
-                                                    chat.id,
-                                                    e.target.value
-                                                )
-                                            }
-                                            onKeyPress={(e) =>
-                                                e.key === 'Enter' &&
-                                                renameChat(
-                                                    chat.id,
-                                                    e.currentTarget.value
-                                                )
-                                            }
-                                            className="flex-grow px-2 py-1 bg-white/10 
-                                                     text-white placeholder-white/50
-                                                     rounded border border-white/20 
-                                                     focus:outline-none focus:border-white/30"
-                                            autoFocus
-                                        />
-                                    ) : (
-                                        <>
-                                            <span className="flex-grow truncate text-white font-medium">
-                                                {chat.name}
-                                            </span>
-                                            <div className="flex items-center gap-1 ml-2">
-                                                <Tooltip content="Edit Chat Name">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditingId(
-                                                                chat.id
-                                                            );
-                                                        }}
-                                                        className="p-1.5 rounded-lg hover:bg-white/10 transition-all"
-                                                    >
-                                                        <Edit2
-                                                            size={14}
-                                                            className="text-white/70"
-                                                        />
-                                                    </button>
-                                                </Tooltip>
-                                                <Tooltip content="Delete Chat">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            deleteChat(chat.id);
-                                                        }}
-                                                        className="p-1.5 rounded-lg hover:bg-red-500/20 transition-all"
-                                                    >
-                                                        <Trash2
-                                                            size={14}
-                                                            className="text-red-400"
-                                                        />
-                                                    </button>
-                                                </Tooltip>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                    id={chat.id}
+                                    name={chat.name}
+                                    isActive={chat.id === activeChatId}
+                                    editingId={editingId}
+                                    onSelect={() => setActiveChatId(chat.id)}
+                                    onDelete={() => deleteChat(chat.id)}
+                                    onEdit={() => setEditingId(chat.id)}
+                                    onRename={(newName) =>
+                                        renameChat(chat.id, newName)
+                                    }
+                                />
                             ))}
                         </div>
 
-                        <div className="mt-auto pt-4 border-t border-white/10">
-                            <Tooltip content="Sign Out">
-                                <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                                    <LogOut
-                                        size={20}
-                                        className="text-white/80 hover:text-white"
-                                    />
-                                </button>
-                            </Tooltip>
-                        </div>
+                        <SidebarFooter />
                     </div>
                 </div>
 
