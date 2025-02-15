@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft, Plus } from 'lucide-react';
-import { Tooltip } from './common/Tooltip';
+import { Tooltip } from './Tooltip';
 
 interface SidebarHeaderProps {
     onCollapse: () => void;

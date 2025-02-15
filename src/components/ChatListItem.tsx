@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
-import { Tooltip } from './common/Tooltip';
+import { Tooltip } from './Tooltip';
 
 interface ChatListItemProps {
     id: string;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mic, Send, Paperclip, Loader2 } from 'lucide-react';
-import { Tooltip } from './common/Tooltip';
+import { Tooltip } from './Tooltip';
 import { ActionButtonsProps } from '../types/messageInput';
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({

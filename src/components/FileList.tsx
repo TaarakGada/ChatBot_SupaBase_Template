@@ -7,7 +7,7 @@ import {
     ChevronDown,
 } from 'lucide-react';
 import * as TooltipProvider from '@radix-ui/react-tooltip';
-import { Tooltip } from './common/Tooltip';
+import { Tooltip } from './Tooltip';
 import { formatFileSize } from '../utils/fileUtils';
 
 interface FileListProps {

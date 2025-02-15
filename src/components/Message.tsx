@@ -1,7 +1,7 @@
 import React from 'react';
 import { Copy, Volume2 } from 'lucide-react';
 import * as TooltipProvider from '@radix-ui/react-tooltip';
-import { Tooltip } from './common/Tooltip';
+import { Tooltip } from './Tooltip';
 import toast from 'react-hot-toast';
 import { AudioMessage } from './AudioMessage';
 import { FilePreview } from './FilePreview';

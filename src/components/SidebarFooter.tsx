@@ -1,6 +1,6 @@
 import React from 'react';
 import { LogOut } from 'lucide-react';
-import { Tooltip } from './common/Tooltip';
+import { Tooltip } from './Tooltip';
 
 export const SidebarFooter: React.FC = () => {
     return (
