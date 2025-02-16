@@ -1,47 +1,63 @@
+import React, { useMemo } from 'react';
 import { VoiceRecordingPreview } from './VoiceRecordingPreview';
 import { FileListPreview } from './FileListPreview';
-import { JSX } from 'react';
 
 interface TextMessageProps {
     content: string;
 }
 
 export const TextMessage: React.FC<TextMessageProps> = ({ content }) => {
-    const lines = content.split('\n');
-    const messageContent: JSX.Element[] = [];
-    let currentFiles: string[] = [];
-
-    lines.forEach((line, index) => {
-        if (line.startsWith('[Voice Recording:')) {
-            const size =
-                line.match(/\[(Voice Recording: .+)\]/)?.[1].split(': ')[1] ||
-                '';
-            messageContent.push(
-                <VoiceRecordingPreview
-                    key={`voice-${index}`}
-                    size={size}
-                />
-            );
-        } else if (line.startsWith('[Attached files:')) {
-            currentFiles =
-                line.match(/\[Attached files: (.+)\]/)?.[1].split(', ') || [];
-            messageContent.push(
-                <FileListPreview
-                    key={`files-${index}`}
-                    files={currentFiles}
-                />
-            );
-        } else if (line.trim()) {
-            messageContent.push(
-                <p
-                    key={index}
-                    className="break-words whitespace-pre-wrap text-sm"
-                >
-                    {line}
-                </p>
-            );
+    const messageElements = useMemo(() => {
+        if (!content || typeof content !== 'string') {
+            return [];
         }
-    });
 
-    return <div className="space-y-2">{messageContent}</div>;
+        return content
+            .split('\n')
+            .filter((line) => line.trim())
+            .map((line, index) => {
+                const elementKey = `${line.slice(0, 10)}-${index}`;
+
+                if (line.startsWith('[Voice Recording:')) {
+                    const size =
+                        line
+                            .match(/\[(Voice Recording: .+)\]/)?.[1]
+                            .split(': ')[1] || '';
+                    return (
+                        <VoiceRecordingPreview
+                            key={`voice-${elementKey}`}
+                            size={size}
+                        />
+                    );
+                }
+
+                if (line.startsWith('[Attached files:')) {
+                    const files =
+                        line
+                            .match(/\[Attached files: (.+)\]/)?.[1]
+                            .split(', ') || [];
+                    return (
+                        <FileListPreview
+                            key={`files-${elementKey}`}
+                            files={files}
+                        />
+                    );
+                }
+
+                return (
+                    <p
+                        key={`text-${elementKey}`}
+                        className="break-words whitespace-pre-wrap text-sm"
+                    >
+                        {line}
+                    </p>
+                );
+            });
+    }, [content]);
+
+    if (!messageElements.length) {
+        return null;
+    }
+
+    return <div className="space-y-2">{messageElements}</div>;
 };

@@ -1,95 +1,33 @@
 import React from 'react';
-import { Copy, Volume2 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { AudioMessage } from './AudioMessage';
-import { FilePreview } from './FilePreview';
 import { TextMessage } from './TextMessage';
-
-interface MessageProps {
-    content:
-        | string
-        | {
-              type: 'audio' | 'file';
-              url: string;
-              name: string;
-          };
-    isUser: boolean;
-    timestamp: string;
-}
+import { MessageProps } from '../types/message';
 
 export const Message: React.FC<MessageProps> = ({
     content,
     isUser,
     timestamp,
 }) => {
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        toast.success('Copied to clipboard!');
-    };
-
-    const speakText = (text: string) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(utterance);
-        toast.success('Speaking text...');
-    };
+    const messageContent =
+        typeof content === 'string' ? content : content.text || '';
+    const uniqueKey = `message-${timestamp}-${isUser ? 'user' : 'ai'}`;
 
     return (
         <div
-            className={`flex ${
-                isUser ? 'justify-end' : 'justify-start'
-            } mb-4 animate-fadeIn`}
+            key={uniqueKey}
+            className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
         >
             <div
-                className={`max-w-[70%] min-w-[240px] ${
+                className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                     isUser
-                        ? 'bg-blue-500/20 backdrop-blur-sm border-blue-500/30 text-white'
-                        : 'bg-neutral-100/10 backdrop-blur-sm border-neutral-200/10 text-neutral-100'
-                } p-4 rounded-2xl shadow-lg hover:shadow-xl border transition-all duration-300`}
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-800'
+                }`}
             >
-                {typeof content === 'string' ? (
-                    <TextMessage content={content} />
-                ) : content.type === 'audio' ? (
-                    <AudioMessage
-                        url={content.url}
-                        name={content.name}
-                    />
-                ) : (
-                    <FilePreview name={content.name} />
-                )}
-
-                <div
-                    className={`text-xs mt-2 flex items-center justify-between gap-2 ${
-                        isUser ? 'text-blue-100' : 'text-gray-500'
-                    }`}
-                >
-                    <span className="opacity-75">{timestamp}</span>
-                    {typeof content === 'string' && (
-                        <div className="flex items-center gap-1">
-                            {!isUser && (
-                                <button
-                                    onClick={() => speakText(content)}
-                                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                                    title="Speak text"
-                                >
-                                    <Volume2
-                                        size={14}
-                                        className="text-white/70"
-                                    />
-                                </button>
-                            )}
-                            <button
-                                onClick={() => copyToClipboard(content)}
-                                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                                title="Copy to clipboard"
-                            >
-                                <Copy
-                                    size={14}
-                                    className="text-white/70"
-                                />
-                            </button>
-                        </div>
-                    )}
-                </div>
+                <TextMessage
+                    key={`text-${uniqueKey}`}
+                    content={messageContent}
+                />
+                <div className="text-xs mt-1 opacity-50">{timestamp}</div>
             </div>
         </div>
     );

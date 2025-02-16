@@ -1,7 +1,8 @@
 export interface MessageInputProps {
-    onSendMessage: (message: string) => void;
-    onSendVoice: (blob: Blob) => void;
-    onSendFiles: (files: File[]) => void;
+    onSendMessage: (content: string) => Promise<void>;
+    onSendVoice: (blob: Blob) => Promise<void>;
+    onSendFiles: (files: File[]) => Promise<void>;
+    isLoading?: boolean; // Add this line
 }
 
 export interface ToolListProps {

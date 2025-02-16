@@ -11,8 +11,7 @@ export const FileListPreview: React.FC<FileListPreviewProps> = ({ files }) => (
             {files.map((file, idx) => (
                 <FilePreview
                     key={idx}
-                    name={file}
-                />
+                    name={file} url={''}                />
             ))}
         </div>
     </div>

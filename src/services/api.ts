@@ -1,3 +1,7 @@
+// import axios from 'axios';
+
+const AI_BOT_RESPONSE_URL = process.env.NEXT_PUBLIC_AI_BOT_RESPONSE_URL;
+
 export interface AIResponse {
     text: string;
     status: 'success' | 'error';
@@ -6,23 +10,27 @@ export interface AIResponse {
 
 export async function sendToAI(formData: FormData): Promise<AIResponse> {
     try {
-        // Mock API call - Replace with actual API endpoint
-        const response = await fetch('YOUR_AI_ENDPOINT', {
+        if (!formData.has('text')) {
+            throw new Error('Text is required');
+        }
+
+        const response = await fetch("https://e7cb-103-139-247-56.ngrok-free.app/process-request/", {
             method: 'POST',
             body: formData,
         });
 
         if (!response.ok) {
-            throw new Error('API request failed');
+            throw new Error(`API request failed: ${response.statusText}`);
         }
 
-        // Mock response - Replace with actual API response handling
+        const data = await response.json();  // Only call this once
+
+        console.log(data);  // Log the parsed JSON data, not the raw response
+
         return {
-            text: "I've processed your request. Here's what I understood:\n" +
-                (formData.get('message') ? `- Message: ${formData.get('message')}\n` : '') +
-                (formData.get('audio') ? "- I've processed your voice message\n" : '') +
-                (formData.getAll('files').length ? `- Received ${formData.getAll('files').length} files\n` : ''),
-            status: 'success'
+            text: data.result || data.error || '',
+            status: data.error ? 'error' : 'success',
+            error: data.error
         };
     } catch (error) {
         return {
@@ -32,3 +40,4 @@ export async function sendToAI(formData: FormData): Promise<AIResponse> {
         };
     }
 }
+

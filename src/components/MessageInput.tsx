@@ -16,12 +16,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     onSendMessage,
     onSendVoice,
     onSendFiles,
+    isLoading = false, // Add default value
 }) => {
     const [message, setMessage] = useState('');
     const [showToolList, setShowToolList] = useState(false);
     const [filteredTools, setFilteredTools] = useState(tools);
     const [selectedToolIndex, setSelectedToolIndex] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,7 +142,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             return;
         }
 
-        setIsLoading(true);
+        if (isLoading) return; // Add this check
 
         try {
             const userContent = [
@@ -169,8 +169,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         } catch (error) {
             toast.error('Failed to send message');
             console.error('Error:', error);
-        } finally {
-            setIsLoading(false);
         }
     };
 

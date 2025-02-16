@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { Tooltip } from './Tooltip';
 import { SidebarHeader } from './SidebarHeader';
 import { ChatListItem } from './ChatListItem';
 import { SidebarFooter } from './SidebarFooter';
+import { chatService } from '@/services/chatService';
 
 interface Chat {
     id: string;
@@ -11,6 +12,7 @@ interface Chat {
 }
 
 interface SidebarProps {
+    userId: string;
     isCollapsed: boolean;
     setIsCollapsed: (value: boolean) => void;
     activeChatId: string;
@@ -19,47 +21,81 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+    userId,
     isCollapsed,
     setIsCollapsed,
     activeChatId,
     setActiveChatId,
     onDeleteChat,
 }) => {
-    const [chats, setChats] = useState<Chat[]>([
-        { id: '1', name: 'General Chat' },
-        { id: '2', name: 'Project Discussion' },
-    ]);
+    const [chats, setChats] = useState<Chat[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    const addNewChat = () => {
-        const newChat = {
-            id: crypto.randomUUID(),
-            name: `New Chat ${chats.length + 1}`,
-        };
-        setChats([...chats, newChat]);
-        setActiveChatId(newChat.id);
-    };
+    useEffect(() => {
+        if (userId) {
+            loadChats();
+        }
+    }, [userId]);
 
-    const deleteChat = (id: string) => {
-        onDeleteChat(id);
-        const newChats = chats.filter((chat) => chat.id !== id);
-        if (newChats.length === 0) {
-            const newChat = { id: crypto.randomUUID(), name: 'New Chat' };
-            setChats([newChat]);
-            setActiveChatId(newChat.id);
-        } else {
-            setChats(newChats);
-            setActiveChatId(newChats[0].id);
+    const loadChats = async () => {
+        try {
+            const userChats = await chatService.fetchChats(userId);
+            setChats(userChats);
+            if (userChats.length > 0 && !activeChatId) {
+                setActiveChatId(userChats[0].id);
+            }
+        } catch (error) {
+            console.error('Error loading chats:', error);
         }
     };
 
-    const renameChat = (id: string, newName: string) => {
-        setChats(
-            chats.map((chat) =>
-                chat.id === id ? { ...chat, name: newName } : chat
-            )
-        );
-        setEditingId(null);
+    const addNewChat = async () => {
+        try {
+            const newChat = await chatService.createChat(
+                userId,
+                `New Chat ${chats.length + 1}`
+            );
+            setChats((prev) => [newChat, ...prev]);
+            setActiveChatId(newChat.id);
+        } catch (error) {
+            console.error('Error creating chat:', error);
+        }
+    };
+
+    const deleteChat = async (id: string) => {
+        try {
+            await chatService.deleteChat(id);
+            onDeleteChat(id);
+            const newChats = chats.filter((chat) => chat.id !== id);
+            setChats(newChats);
+
+            if (newChats.length === 0) {
+                const newChat = await chatService.createChat(
+                    userId,
+                    'New Chat'
+                );
+                setChats([newChat]);
+                setActiveChatId(newChat.id);
+            } else {
+                setActiveChatId(newChats[0].id);
+            }
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+        }
+    };
+
+    const renameChat = async (id: string, newName: string) => {
+        try {
+            await chatService.updateChat(id, { name: newName });
+            setChats((prev) =>
+                prev.map((chat) =>
+                    chat.id === id ? { ...chat, name: newName } : chat
+                )
+            );
+            setEditingId(null);
+        } catch (error) {
+            console.error('Error renaming chat:', error);
+        }
     };
 
     return (
