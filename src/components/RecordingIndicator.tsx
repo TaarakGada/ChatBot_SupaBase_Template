@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 
 interface RecordingIndicatorProps {
     isRecording: boolean;
@@ -21,15 +22,17 @@ const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
                 <span className="text-white font-medium">
                     Recording: {recordingTime}s
                 </span>
-                <button
-                    onClick={stopRecording}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors duration-200"
-                >
-                    <X
-                        size={20}
-                        className="text-white"
-                    />
-                </button>
+                <Tooltip content="Stop Recording">
+                    <button
+                        onClick={stopRecording}
+                        className="p-2 hover:bg-white/10 rounded-full transition-colors duration-200"
+                    >
+                        <X
+                            size={20}
+                            className="text-white"
+                        />
+                    </button>
+                </Tooltip>
             </div>
         </div>
     );

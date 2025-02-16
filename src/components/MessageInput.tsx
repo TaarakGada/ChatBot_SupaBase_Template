@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import * as TooltipProvider from '@radix-ui/react-tooltip';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Tooltip } from './Tooltip';
 import { tools } from '../constants/messageInput';
 import { formatFileSize } from '../utils/fileUtils';
 import { useAudioRecording } from '../hooks/useAudioRecording';
@@ -180,21 +180,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
 
     return (
-        <TooltipProvider.Provider>
-            <div className="fixed bottom-0 left-0 right-0 p-6 z-10">
-                <RecordingIndicator
-                    isRecording={isRecording}
-                    recordingTime={recordingTime}
-                    stopRecording={stopRecording}
-                />
+        <div className="fixed bottom-0 left-0 right-0 p-6 z-10">
+            <RecordingIndicator
+                isRecording={isRecording}
+                recordingTime={recordingTime}
+                stopRecording={stopRecording}
+            />
 
-                {voiceBlob && !isRecording && (
-                    <div className="max-w-[50%] mx-auto mb-4">
-                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl p-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-white/70">
-                                    Voice Recording Ready
-                                </span>
+            {voiceBlob && !isRecording && (
+                <div className="max-w-[50%] mx-auto mb-4">
+                    <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl p-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm text-white/70">
+                                Voice Recording Ready
+                            </span>
+                            <Tooltip content="Clear recording">
                                 <button
                                     onClick={() => setVoiceBlob(null)}
                                     className="p-1.5 hover:bg-white/10 rounded-lg transition-all duration-200"
@@ -204,61 +204,61 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                         className="text-white/70"
                                     />
                                 </button>
-                            </div>
+                            </Tooltip>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) => handleFileSelection(e.target.files)}
-                    className="hidden"
-                    multiple
-                />
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => handleFileSelection(e.target.files)}
+                className="hidden"
+                multiple
+            />
 
-                <FileList
-                    selectedFiles={selectedFiles}
-                    fileError={fileError}
-                    isFileListCollapsed={isFileListCollapsed}
-                    setIsFileListCollapsed={setIsFileListCollapsed}
-                    setSelectedFiles={setSelectedFiles}
-                />
+            <FileList
+                selectedFiles={selectedFiles}
+                fileError={fileError}
+                isFileListCollapsed={isFileListCollapsed}
+                setIsFileListCollapsed={setIsFileListCollapsed}
+                setSelectedFiles={setSelectedFiles}
+            />
 
-                <div className="relative max-w-[50%] mx-auto">
-                    <div className="relative bg-neutral-900/50 backdrop-blur-xl backdrop-saturate-150 border border-neutral-200/10 rounded-2xl shadow-xl overflow-hidden">
-                        <div className="w-full px-4 pt-4 pb-2">
-                            <textarea
-                                ref={textareaRef}
-                                value={message}
-                                onChange={handleChange}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Type a message..."
-                                className="w-full bg-transparent px-4 pt-4 text-white placeholder-neutral-400 focus:outline-none"
-                                style={{ overflow: 'hidden' }}
-                            />
-                        </div>
-
-                        <ActionButtons
-                            isLoading={isLoading}
-                            isRecording={isRecording}
-                            handleSend={handleSend}
-                            startRecording={startRecording}
-                            stopRecording={stopRecording}
-                            onFileClick={() => fileInputRef.current?.click()}
+            <div className="relative max-w-[50%] mx-auto">
+                <div className="relative bg-neutral-900/50 backdrop-blur-xl backdrop-saturate-150 border border-neutral-200/10 rounded-2xl shadow-xl overflow-hidden">
+                    <div className="w-full px-4 pt-4 pb-2">
+                        <textarea
+                            ref={textareaRef}
+                            value={message}
+                            onChange={handleChange}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type a message..."
+                            className="w-full bg-transparent px-4 pt-4 text-white placeholder-neutral-400 focus:outline-none"
+                            style={{ overflow: 'hidden' }}
                         />
                     </div>
 
-                    <ToolList
-                        message={message}
-                        showToolList={showToolList}
-                        selectedToolIndex={selectedToolIndex}
-                        filteredTools={filteredTools}
-                        onToolSelect={insertTool}
+                    <ActionButtons
+                        isLoading={isLoading}
+                        isRecording={isRecording}
+                        handleSend={handleSend}
+                        startRecording={startRecording}
+                        stopRecording={stopRecording}
+                        onFileClick={() => fileInputRef.current?.click()}
                     />
                 </div>
+
+                <ToolList
+                    message={message}
+                    showToolList={showToolList}
+                    selectedToolIndex={selectedToolIndex}
+                    filteredTools={filteredTools}
+                    onToolSelect={insertTool}
+                />
             </div>
-        </TooltipProvider.Provider>
+        </div>
     );
 };
 
