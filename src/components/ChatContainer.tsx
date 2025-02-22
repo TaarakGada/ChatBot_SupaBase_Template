@@ -33,7 +33,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         }
     };
 
-    const handleMessageSubmit = async (content: string) => {
+    const handleMessageSubmit = async (content: string, files?: File[]) => {
         setIsLoading(true);
         try {
             // Save user message
@@ -48,12 +48,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             });
             setMessages((prev) => [...prev, userMessage]);
 
-            // Create FormData with text field
-            const formData = new FormData();
-            formData.append('text', content);
-
-            // Get AI response
-            const aiResponse = await sendToAI(formData);
+            // Get AI response with files
+            const aiResponse = await sendToAI(content, files);
 
             if (aiResponse.status === 'error') {
                 throw new Error(
@@ -65,7 +61,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             const aiMessage = await chatService.saveMessage({
                 chat_id: activeChatId,
                 content: {
-                    text: aiResponse.text,
+                    text: aiResponse.result,
                     type: 'text',
                 },
                 is_user: false,

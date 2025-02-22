@@ -157,7 +157,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 .filter(Boolean)
                 .join('\n');
 
-            onSendMessage(userContent);
+            // Pass both content and files to onSendMessage
+            onSendMessage(userContent, selectedFiles);
 
             // Clear all inputs
             setMessage('');

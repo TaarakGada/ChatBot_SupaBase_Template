@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Chat Interface
 
-## Getting Started
+A modern, responsive chat interface built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
-First, run the development server:
+## Features
 
+- 💬 Real-time chat interface
+- 🎤 Voice recording support
+- 📎 File attachments
+- 🛠 Tool integration system
+- 🔐 Authentication with Supabase
+- 🎨 Dark mode support
+- 💅 Responsive design
+
+## Setup
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+- Supabase account
+- AI backend endpoint
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Configure environment variables:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_AI_BOT_RESPONSE_URL=your_ai_endpoint
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Database Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Use the provided `schema.sql` in the `supabase` folder to set up your database tables
+2. The schema creates three main tables:
+   - `profiles`: User profiles
+   - `chats`: Chat sessions
+   - `messages`: Individual messages
 
-## Learn More
+### API Integration
 
-To learn more about Next.js, take a look at the following resources:
+1. The chat interface expects API responses in the following format:
+```typescript
+interface AIResponse {
+    action: string;
+    result: any;
+    error?: string;
+    status: 'success' | 'error';
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. To integrate your AI backend:
+   - Update the `sendToAI` function in `src/services/api.ts`
+   - Ensure your API endpoint handles both text and file inputs
+   - Response should include appropriate action and result fields
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Supabase Integration
 
-## Deploy on Vercel
+1. Replace placeholder code in `chatService.ts` with actual Supabase queries:
+   - Uncomment the Supabase queries
+   - Remove placeholder return values
+   - Ensure proper error handling
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. Functions to implement:
+   - `fetchChats`: Retrieve user's chat history
+   - `createChat`: Start new chat session
+   - `saveMessage`: Store messages
+   - `uploadFile`: Handle file uploads
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Example implementation:
+```typescript
+async fetchChats(userId: string): Promise<Chat[]> {
+    const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', userId)
+        .order('last_message_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+}
+```
+
+## Usage
+
+The chat interface components are modular and can be used independently:
+
+```tsx
+import { MessageInput } from './components/MessageInput';
+import { Message } from './components/Message';
+
+// In your chat component:
+const handleSendMessage = async (content: string, files?: File[]) => {
+    // 1. Save message to Supabase
+    const message = await chatService.saveMessage({
+        chat_id: currentChatId,
+        content: { text: content },
+        is_user: true
+    });
+
+    // 2. Send to AI backend
+    const aiResponse = await sendToAI(content, files);
+
+    // 3. Save AI response
+    await chatService.saveMessage({
+        chat_id: currentChatId,
+        content: { text: aiResponse.result },
+        is_user: false
+    });
+};
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+MIT

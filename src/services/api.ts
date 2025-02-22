@@ -3,15 +3,20 @@
 const AI_BOT_RESPONSE_URL = process.env.NEXT_PUBLIC_AI_BOT_RESPONSE_URL;
 
 export interface AIResponse {
-    text: string;
-    status: 'success' | 'error';
+    action: string;
+    result: any;
     error?: string;
+    status: 'success' | 'error';
 }
 
-export async function sendToAI(formData: FormData): Promise<AIResponse> {
+export async function sendToAI(text: string, files?: File[]): Promise<AIResponse> {
     try {
-        if (!formData.has('text')) {
-            throw new Error('Text is required');
+        const formData = new FormData();
+        formData.append('text', text);
+
+        // Only append the first file if it exists
+        if (files && files.length > 0) {
+            formData.append('file', files[0]);
         }
 
         const response = await fetch("https://e7cb-103-139-247-56.ngrok-free.app/process-request/", {
@@ -23,18 +28,18 @@ export async function sendToAI(formData: FormData): Promise<AIResponse> {
             throw new Error(`API request failed: ${response.statusText}`);
         }
 
-        const data = await response.json();  // Only call this once
-
-        console.log(data);  // Log the parsed JSON data, not the raw response
+        const data = await response.json();
 
         return {
-            text: data.result || data.error || '',
+            action: data.action,
+            result: data.result,
             status: data.error ? 'error' : 'success',
             error: data.error
         };
     } catch (error) {
         return {
-            text: '',
+            action: 'error',
+            result: {},
             status: 'error',
             error: error instanceof Error ? error.message : 'Unknown error occurred'
         };
