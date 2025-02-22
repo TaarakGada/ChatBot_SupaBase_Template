@@ -1,8 +1,12 @@
-import { supabase } from '../lib/supabase';
-import type { Chat, Message } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
+import type { Chat, Message, MessageContent } from '@/lib/supabase';
+import { Database } from '@/types/supabase';
+
+type ChatUpdate = Database['public']['Tables']['chats']['Update'];
 
 export const chatService = {
     async fetchChats(userId: string): Promise<Chat[]> {
+        console.log('Fetching chats for user:', userId);
         const { data, error } = await supabase
             .from('chats')
             .select('*')
@@ -24,7 +28,7 @@ export const chatService = {
         return data;
     },
 
-    async updateChat(chatId: string, updates: Partial<Chat>): Promise<void> {
+    async updateChat(chatId: string, updates: ChatUpdate): Promise<void> {
         const { error } = await supabase
             .from('chats')
             .update(updates)
@@ -54,44 +58,76 @@ export const chatService = {
     },
 
     async saveMessage(message: Partial<Message>): Promise<Message> {
+        console.log('Saving message:', message);
         if (!message.chat_id) {
+            console.error('chat_id is required');
             throw new Error('chat_id is required');
         }
 
-        // Validate message type and required fields
-        if ((message.message_type === 'file' || message.message_type === 'voice') && !message.file_url && !message.file_urls) {
-            throw new Error('File URL or File URLs are required for file/voice messages');
+        try {
+            const messageData: Database['public']['Tables']['messages']['Insert'] = {
+                chat_id: message.chat_id,
+                content: message.content || '',
+                message_type: message.message_type || 'text',
+                is_user: message.is_user ?? true,
+                file_urls: message.files ? message.files.map(f => f.url) : message.file_urls,
+                file_names: message.files ? message.files.map(f => f.name) : message.file_names,
+                voice_url: message.voice_url || null,
+            };
+
+            console.log('Inserting message into database:', messageData);
+            const { data: newMessage, error: messageError } = await supabase
+                .from('messages')
+                .insert([messageData])
+                .select()
+                .single();
+
+            if (messageError) {
+                console.error('Error saving message:', messageError);
+                throw messageError;
+            }
+
+            console.log('Message saved successfully:', newMessage);
+
+            await this.updateChat(message.chat_id, {
+                updated_at: new Date().toISOString()
+            });
+
+            return newMessage;
+        } catch (error) {
+            console.error('Error in saveMessage:', error);
+            throw error;
         }
-
-        const { data, error } = await supabase
-            .from('messages')
-            .insert([message])
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        // Update chat's updated_at timestamp
-        await this.updateChat(message.chat_id, {
-            updated_at: new Date().toISOString()
-        });
-
-        return data;
     },
 
     async uploadFile(file: File, userId: string): Promise<string> {
-        const fileExt = file.name.split('.').pop();
+        if (!file || !userId) {
+            throw new Error('File and userId are required');
+        }
+
+        console.log('Uploading file:', { fileName: file.name, userId });
+        const fileExt = file.name.split('.').pop() || '';
         const fileName = `${userId}/${crypto.randomUUID()}.${fileExt}`;
 
         const { error: uploadError, data } = await supabase.storage
-            .from('chat-attachments')  // Using our new bucket name
-            .upload(fileName, file);
+            .from('chat-attachments')
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+            console.error('Error uploading file:', uploadError);
+            throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
             .from('chat-attachments')
             .getPublicUrl(fileName);
+
+        if (!publicUrl) {
+            throw new Error('Failed to get public URL for uploaded file');
+        }
 
         return publicUrl;
     }

@@ -47,67 +47,102 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     };
 
     const handleMessageSubmit = async (content: string, files?: File[]) => {
-        if (!activeChatId || !isValidUUID(activeChatId)) {
-            toast.error('Invalid chat session');
-            return;
-        }
+        console.log('Starting handleMessageSubmit with:', {
+            content,
+            filesCount: files?.length,
+        });
 
-        if (!content.trim() && (!files || files.length === 0)) {
+        if (!activeChatId || !isValidUUID(activeChatId)) {
+            console.error('Invalid chat session:', { activeChatId });
+            toast.error('Invalid chat session');
             return;
         }
 
         setIsLoading(true);
         try {
+            // Clean up the content by removing system-generated text
+            const cleanContent = content
+                .replace(/\[Voice Recording:.*?\]/g, '')
+                .replace(/\[Attached files:.*?\]/g, '')
+                .trim();
+
+            console.log('Preparing message data...');
+
             // Handle files if present
-            if (files?.length) {
-                const file = files[0]; // Handle first file
-                const fileUrl = await chatService.uploadFile(file, userId);
-
-                // Save file message
-                const userMessage = await chatService.saveMessage({
-                    chat_id: activeChatId,
-                    content: file.name, // Store filename as content
-                    message_type: 'file',
-                    file_url: fileUrl,
-                    is_user: true,
-                });
-                setMessages((prev) => [...prev, userMessage]);
-            }
-            // Handle text message if present
-            else if (content.trim()) {
-                const userMessage = await chatService.saveMessage({
-                    chat_id: activeChatId,
-                    content: content,
-                    message_type: 'text',
-                    is_user: true,
-                });
-                setMessages((prev) => [...prev, userMessage]);
-            }
-
-            // Send to AI and handle response
-            const aiResponse = await sendToAI(content, files);
-            if (aiResponse.status === 'success') {
-                const aiMessage = await chatService.saveMessage({
-                    chat_id: activeChatId,
-                    content: aiResponse.result,
-                    message_type: 'text',
-                    is_user: false,
-                });
-                setMessages((prev) => [...prev, aiMessage]);
-            } else {
-                throw new Error(
-                    aiResponse.error || 'Failed to get AI response'
+            if (files && files.length > 0) {
+                console.log(
+                    'Processing files:',
+                    files.map((f) => f.name)
                 );
+                try {
+                    const uploadedFiles = await Promise.all(
+                        files.map(async (file) => {
+                            const fileUrl = await chatService.uploadFile(
+                                file,
+                                userId
+                            );
+                            return { url: fileUrl, name: file.name };
+                        })
+                    );
+
+                    // Save file message
+                    const fileMessage = await chatService.saveMessage({
+                        chat_id: activeChatId,
+                        content: files.map((f) => f.name).join(', '),
+                        message_type: 'file',
+                        files: uploadedFiles,
+                        is_user: true,
+                    });
+                    setMessages((prev) => [...prev, fileMessage]);
+                } catch (fileError) {
+                    console.error('Error uploading files:', fileError);
+                    throw fileError;
+                }
+            }
+
+            // If there's actual text content, save it as a separate text message
+            if (cleanContent) {
+                const textMessage = await chatService.saveMessage({
+                    chat_id: activeChatId,
+                    content: cleanContent,
+                    message_type: 'text',
+                    is_user: true,
+                });
+                setMessages((prev) => [...prev, textMessage]);
+
+                // Handle AI response only for text messages
+                console.log('Sending to AI:', cleanContent);
+                const aiResponse = await sendToAI(cleanContent, files);
+                if (aiResponse.status === 'success' && aiResponse.result) {
+                    const aiMessageContent =
+                        typeof aiResponse.result === 'string'
+                            ? aiResponse.result
+                            : aiResponse.result.message ||
+                              JSON.stringify(aiResponse.result);
+
+                    const aiMessage = await chatService.saveMessage({
+                        chat_id: activeChatId,
+                        content: aiMessageContent,
+                        message_type: 'text',
+                        is_user: false,
+                    });
+                    setMessages((prev) => [...prev, aiMessage]);
+                }
             }
         } catch (error) {
-            console.error('Error:', error);
-            toast.error('Failed to process message');
+            console.error('Error in handleMessageSubmit:', error);
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to send message'
+            );
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleVoiceMessage = async (blob: Blob) => {
+        console.log('Starting handleVoiceMessage');
         if (!activeChatId || !isValidUUID(activeChatId)) {
             toast.error('Invalid chat session');
             return;
@@ -123,7 +158,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                 chat_id: activeChatId,
                 content: 'Voice Message', // Description as content
                 message_type: 'voice',
-                file_url: fileUrl,
+                voice_url: fileUrl,
                 is_user: true,
             });
             setMessages((prev) => [...prev, message]);
@@ -134,6 +169,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     };
 
     const handleFiles = async (files: File[]) => {
+        console.log(
+            'Starting handleFiles with:',
+            files.map((f) => f.name)
+        );
         if (!activeChatId || !isValidUUID(activeChatId)) {
             toast.error('Invalid chat session');
             return;
@@ -164,29 +203,22 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         }
     };
 
-    const formatMessageContent = (
-        message: MessageType
-    ): string | MessageContent => {
+    const formatMessageContent = (message: MessageType): MessageContent => {
         if (message.message_type === 'text') {
-            return message.content;
+            return {
+                text: message.content,
+            };
         }
         if (message.message_type === 'voice') {
             return {
-                type: 'voice',
                 text: message.content,
-                url: message.file_url,
-                name: message.content,
+                voice_url: message.voice_url,
             };
         }
         return {
-            type: message.message_type,
             text: message.content,
-            urls:
-                message.file_urls ||
-                (message.file_url ? [message.file_url] : []),
-            names:
-                message.file_names ||
-                (message.content ? [message.content] : []),
+            file_urls: message.file_urls,
+            file_names: message.file_names,
         };
     };
 

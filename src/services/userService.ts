@@ -1,13 +1,8 @@
 import { supabase } from '@/lib/supabase';
-
-interface User {
-    id: string;
-    name: string;
-    email: string;
-}
+import type { Profile } from '@/lib/supabase';
 
 export const userService = {
-    async upsertUser(user: User) {
+    async upsertUser(user: Profile) {
         const { error, data } = await supabase
             .from('users')
             .upsert(user, { onConflict: 'id' })

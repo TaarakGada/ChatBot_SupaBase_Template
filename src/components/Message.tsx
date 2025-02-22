@@ -5,7 +5,7 @@ import { AudioMessage } from './AudioMessage';
 import { FilePreview } from './FilePreview';
 
 interface MessageProps {
-    content: string | MessageContent;
+    content: MessageContent;
     isUser: boolean;
     timestamp: string;
 }
@@ -15,34 +15,46 @@ export const Message: React.FC<MessageProps> = ({
     isUser,
     timestamp,
 }) => {
-    const renderMessageContent = () => {
-        if (typeof content === 'string') {
-            return <TextMessage content={content} />;
+    const renderContent = () => {
+        const elements = [];
+
+        // Add text content if exists
+        if (content.text) {
+            elements.push(
+                <TextMessage
+                    key="text"
+                    content={content.text}
+                />
+            );
         }
 
-        switch (content.type) {
-            case 'voice':
-                return (
-                    <AudioMessage
-                        url={content.url!}
-                        name="Voice Message"
+        // Add voice message if exists
+        if (content.voice_url) {
+            elements.push(
+                <AudioMessage
+                    key="voice"
+                    url={content.voice_url}
+                    name="Voice Message"
+                />
+            );
+        }
+
+        // Add files if they exist
+        if (content.file_urls && content.file_urls.length > 0) {
+            content.file_urls.forEach((url, index) => {
+                elements.push(
+                    <FilePreview
+                        key={`file-${index}`}
+                        name={content.file_names?.[index] || 'File'}
+                        url={url}
                     />
                 );
-            case 'file':
-                return (
-                    <div className="space-y-2">
-                        {content.urls?.map((url, index) => (
-                            <FilePreview
-                                key={url}
-                                name={content.names?.[index] || 'File'}
-                                url={url}
-                            />
-                        ))}
-                    </div>
-                );
-            default:
-                return <TextMessage content={content.text || ''} />;
+            });
         }
+
+        return elements.length > 0 ? (
+            <div className="space-y-2">{elements}</div>
+        ) : null;
     };
 
     return (
@@ -54,7 +66,7 @@ export const Message: React.FC<MessageProps> = ({
                         : 'bg-gray-200 text-gray-800'
                 }`}
             >
-                {renderMessageContent()}
+                {renderContent()}
                 <div className="text-xs mt-1 opacity-50">{timestamp}</div>
             </div>
         </div>

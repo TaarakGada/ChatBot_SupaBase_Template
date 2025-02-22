@@ -15,30 +15,32 @@ export interface Profile {
 
 export interface Chat {
     id: string;
-    user_id: string;
-    name: string;
     created_at: string;
     updated_at: string;
+    user_id: string;
+    name: string;
 }
 
 export interface Message {
     id: string;
+    created_at: string;
     chat_id: string;
     content: string;
     message_type: 'text' | 'file' | 'voice';
-    file_urls?: string[];
-    file_names?: string[];
-    file_url?: string; // for backward compatibility
     is_user: boolean;
-    created_at: string;
-    updated_at: string;
+    voice_url?: string | null;
+    file_urls?: string[] | null;
+    file_names?: string[] | null;
+    files?: Array<{
+        url: string;
+        name: string;
+        type?: string;
+    }>;
 }
 
 export type MessageContent = {
-    type: 'text' | 'file' | 'voice';
     text?: string;
-    urls?: string[];
-    names?: string[];
-    url?: string;  // for backward compatibility with voice messages
-    name?: string; // for backward compatibility with voice messages
+    file_urls?: string[] | null;
+    file_names?: string[] | null;
+    voice_url?: string | null;
 };

@@ -11,58 +11,79 @@ export interface Database {
         Tables: {
             chats: {
                 Row: {
+                    created_at: string
                     id: string
                     name: string
-                    user_id: string
-                    created_at: string
                     updated_at: string
+                    user_id: string
                 }
                 Insert: {
+                    created_at?: string
                     id?: string
                     name: string
-                    user_id: string
-                    created_at?: string
                     updated_at?: string
+                    user_id: string
                 }
                 Update: {
+                    created_at?: string
                     id?: string
                     name?: string
-                    user_id?: string
-                    created_at?: string
                     updated_at?: string
+                    user_id?: string
                 }
+                Relationships: [
+                    {
+                        foreignKeyName: "chats_user_id_fkey"
+                        columns: ["user_id"]
+                        isOneToOne: false
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
             messages: {
                 Row: {
-                    id: string
                     chat_id: string
                     content: string
-                    message_type: 'text' | 'file' | 'voice'
-                    file_url: string | null
-                    is_user: boolean
                     created_at: string
-                    updated_at: string
+                    file_names: string[] | null
+                    file_urls: string[] | null
+                    id: string
+                    is_user: boolean
+                    message_type: string
+                    voice_url: string | null
                 }
                 Insert: {
-                    id?: string
                     chat_id: string
                     content: string
-                    message_type?: 'text' | 'file' | 'voice'
-                    file_url?: string | null
-                    is_user?: boolean
                     created_at?: string
-                    updated_at?: string
+                    file_names?: string[] | null
+                    file_urls?: string[] | null
+                    id?: string
+                    is_user: boolean
+                    message_type: string
+                    voice_url?: string | null
                 }
                 Update: {
-                    id?: string
                     chat_id?: string
                     content?: string
-                    message_type?: 'text' | 'file' | 'voice'
-                    file_url?: string | null
-                    is_user?: boolean
                     created_at?: string
-                    updated_at?: string
+                    file_names?: string[] | null
+                    file_urls?: string[] | null
+                    id?: string
+                    is_user?: boolean
+                    message_type?: string
+                    voice_url?: string | null
                 }
+                Relationships: [
+                    {
+                        foreignKeyName: "messages_chat_id_fkey"
+                        columns: ["chat_id"]
+                        isOneToOne: false
+                        referencedRelation: "chats"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
             users: {
                 Row: {
@@ -98,7 +119,10 @@ export interface Database {
             [_ in never]: never
         }
         Enums: {
-            message_type: 'text' | 'file' | 'voice'
+            [_ in never]: never
+        }
+        CompositeTypes: {
+            [_ in never]: never
         }
     }
 }
