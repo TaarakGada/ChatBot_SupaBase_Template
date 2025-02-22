@@ -10,39 +10,50 @@ export interface AIResponse {
 }
 
 export async function sendToAI(text: string, files?: File[]): Promise<AIResponse> {
-    try {
-        const formData = new FormData();
-        formData.append('text', text);
+    // Mock AI response
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve({
+                action: 'mockAction',
+                result: { message: `Mock response for: ${text}` },
+                status: 'success',
+            });
+        }, 500); // Simulate a delay
+    });
 
-        // Only append the first file if it exists
-        if (files && files.length > 0) {
-            formData.append('file', files[0]);
-        }
+    // try {
+    //     const formData = new FormData();
+    //     formData.append('text', text);
 
-        const response = await fetch("https://e7cb-103-139-247-56.ngrok-free.app/process-request/", {
-            method: 'POST',
-            body: formData,
-        });
+    //     // Only append the first file if it exists
+    //     if (files && files.length > 0) {
+    //         formData.append('file', files[0]);
+    //     }
 
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.statusText}`);
-        }
+    //     const response = await fetch("https://e7cb-103-139-247-56.ngrok-free.app/process-request/", {
+    //         method: 'POST',
+    //         body: formData,
+    //     });
 
-        const data = await response.json();
+    //     if (!response.ok) {
+    //         throw new Error(`API request failed: ${response.statusText}`);
+    //     }
 
-        return {
-            action: data.action,
-            result: data.result,
-            status: data.error ? 'error' : 'success',
-            error: data.error
-        };
-    } catch (error) {
-        return {
-            action: 'error',
-            result: {},
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
-        };
-    }
+    //     const data = await response.json();
+
+    //     return {
+    //         action: data.action,
+    //         result: data.result,
+    //         status: data.error ? 'error' : 'success',
+    //         error: data.error
+    //     };
+    // } catch (error) {
+    //     return {
+    //         action: 'error',
+    //         result: {},
+    //         status: 'error',
+    //         error: error instanceof Error ? error.message : 'Unknown error occurred'
+    //     };
+    // }
 }
 

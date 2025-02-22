@@ -31,6 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const [chats, setChats] = useState<Chat[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
 
+    const isValidUUID = (uuid: string) => {
+        const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(uuid);
+    };
+
     useEffect(() => {
         if (userId) {
             loadChats();
@@ -41,7 +47,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         try {
             const userChats = await chatService.fetchChats(userId);
             setChats(userChats);
-            if (userChats.length > 0 && !activeChatId) {
+            if (
+                userChats.length > 0 &&
+                (!activeChatId || !isValidUUID(activeChatId))
+            ) {
                 setActiveChatId(userChats[0].id);
             }
         } catch (error) {
