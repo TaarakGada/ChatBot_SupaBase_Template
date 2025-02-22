@@ -11,39 +11,39 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ name, url }) => {
 
     if (isImage) {
         return (
-            <div className="flex items-center gap-2 p-2 bg-black/20 rounded-lg">
+            <div className="flex items-center gap-2">
                 <ImageIcon
                     size={16}
-                    className="text-blue-400"
+                    className="text-current opacity-70"
                 />
                 <a
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-white/70 hover:text-white truncate flex-1"
+                    className="text-sm hover:opacity-100 opacity-70 truncate flex-1"
                 >
                     {name}
                 </a>
-                <span className="text-xs text-white/50">{extension}</span>
+                <span className="text-xs opacity-50">{extension}</span>
             </div>
         );
     }
 
     return (
-        <div className="flex items-center gap-2 p-2 bg-black/20 rounded-lg">
+        <div className="flex items-center gap-2">
             <FileIcon
                 size={16}
-                className="text-blue-400"
+                className="text-current opacity-70"
             />
             <a
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-white/70 hover:text-white truncate flex-1"
+                className="text-sm hover:opacity-100 opacity-70 truncate flex-1"
             >
                 {name}
             </a>
-            <span className="text-xs text-white/50">{extension}</span>
+            <span className="text-xs opacity-50">{extension}</span>
         </div>
     );
 };
