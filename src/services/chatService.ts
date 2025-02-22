@@ -59,8 +59,8 @@ export const chatService = {
         }
 
         // Validate message type and required fields
-        if ((message.message_type === 'file' || message.message_type === 'voice') && !message.file_url) {
-            throw new Error('File URL is required for file/voice messages');
+        if ((message.message_type === 'file' || message.message_type === 'voice') && !message.file_url && !message.file_urls) {
+            throw new Error('File URL or File URLs are required for file/voice messages');
         }
 
         const { data, error } = await supabase

@@ -5,13 +5,14 @@ DROP TABLE IF EXISTS public.messages;
 DROP TYPE IF EXISTS message_type;
 CREATE TYPE message_type AS ENUM ('text', 'file', 'voice');
 
--- Recreate the messages table
+-- Recreate the messages table with files array
 CREATE TABLE public.messages (
   id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   chat_id uuid REFERENCES public.chats(id) ON DELETE CASCADE NOT NULL,
   content text NOT NULL,
   message_type message_type DEFAULT 'text' NOT NULL,
-  file_url text,
+  file_urls text[], -- Changed from file_url to file_urls array
+  file_names text[], -- Added to store file names
   is_user boolean DEFAULT true,
   created_at timestamp WITH time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp WITH time zone DEFAULT timezone('utc'::text, now()) NOT NULL

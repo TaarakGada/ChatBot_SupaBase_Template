@@ -26,15 +26,19 @@ export interface Message {
     chat_id: string;
     content: string;
     message_type: 'text' | 'file' | 'voice';
-    file_url?: string | null;
+    file_urls?: string[];
+    file_names?: string[];
+    file_url?: string; // for backward compatibility
     is_user: boolean;
     created_at: string;
     updated_at: string;
 }
 
-export interface MessageContent {
+export type MessageContent = {
     type: 'text' | 'file' | 'voice';
-    text: string;
-    url?: string;
-    name?: string;
-}
+    text?: string;
+    urls?: string[];
+    names?: string[];
+    url?: string;  // for backward compatibility with voice messages
+    name?: string; // for backward compatibility with voice messages
+};

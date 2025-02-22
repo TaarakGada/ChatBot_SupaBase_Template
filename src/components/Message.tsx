@@ -30,10 +30,15 @@ export const Message: React.FC<MessageProps> = ({
                 );
             case 'file':
                 return (
-                    <FilePreview
-                        name={content.name!}
-                        url={content.url!}
-                    />
+                    <div className="space-y-2">
+                        {content.urls?.map((url, index) => (
+                            <FilePreview
+                                key={url}
+                                name={content.names?.[index] || 'File'}
+                                url={url}
+                            />
+                        ))}
+                    </div>
                 );
             default:
                 return <TextMessage content={content.text || ''} />;

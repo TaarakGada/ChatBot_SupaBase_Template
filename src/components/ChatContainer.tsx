@@ -140,17 +140,24 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         }
 
         try {
+            const fileUrls: string[] = [];
+            const fileNames: string[] = [];
+
             for (const file of files) {
                 const fileUrl = await chatService.uploadFile(file, userId);
-                const message = await chatService.saveMessage({
-                    chat_id: activeChatId,
-                    content: file.name,
-                    message_type: 'file',
-                    file_url: fileUrl,
-                    is_user: true,
-                });
-                setMessages((prev) => [...prev, message]);
+                fileUrls.push(fileUrl);
+                fileNames.push(file.name);
             }
+
+            const message = await chatService.saveMessage({
+                chat_id: activeChatId,
+                content: fileNames.join(', '),
+                message_type: 'file',
+                file_urls: fileUrls,
+                file_names: fileNames,
+                is_user: true,
+            });
+            setMessages((prev) => [...prev, message]);
         } catch (error) {
             console.error('Error saving files:', error);
             toast.error('Failed to save files');
@@ -163,11 +170,23 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         if (message.message_type === 'text') {
             return message.content;
         }
+        if (message.message_type === 'voice') {
+            return {
+                type: 'voice',
+                text: message.content,
+                url: message.file_url,
+                name: message.content,
+            };
+        }
         return {
             type: message.message_type,
             text: message.content,
-            url: message.file_url ?? undefined,
-            name: message.content,
+            urls:
+                message.file_urls ||
+                (message.file_url ? [message.file_url] : []),
+            names:
+                message.file_names ||
+                (message.content ? [message.content] : []),
         };
     };
 
@@ -196,7 +215,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         <div className="flex flex-col h-full w-full max-h-screen bg-transparent">
             <div
                 ref={messagesContainerRef}
-                className="flex-grow overflow-y-auto scroll-smooth custom-scrollbar p-16 space-y-6"
+                className="flex-grow overflow-y-auto scroll-smooth custom-scrollbar p-16 pb-48 space-y-6" // Added pb-40
             >
                 {messages.map((message, index) => (
                     <Message
