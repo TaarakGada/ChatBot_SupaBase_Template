@@ -12,44 +12,63 @@ export const TextMessage: React.FC<TextMessageProps> = ({ content }) => {
             return [];
         }
 
+        // Split by double newlines to separate paragraphs
         return content
-            .split('\n')
-            .filter((line) => line.trim())
-            .map((line, index) => {
-                const elementKey = `${line.slice(0, 10)}-${index}`;
+            .split('\n\n')
+            .filter((paragraph) => paragraph.trim())
+            .map((paragraph, index) => {
+                const elementKey = `${paragraph.slice(0, 10)}-${index}`;
 
-                if (line.startsWith('[Voice Recording:')) {
-                    const size =
-                        line
-                            .match(/\[(Voice Recording: .+)\]/)?.[1]
-                            .split(': ')[1] || '';
+                // Handle special formatted content (lists, etc.)
+                if (paragraph.includes('*')) {
                     return (
-                        <VoiceRecordingPreview
-                            key={`voice-${elementKey}`}
-                            size={size}
-                        />
+                        <div
+                            key={`formatted-${elementKey}`}
+                            className="markdown-content"
+                        >
+                            {paragraph.split('\n').map((line, lineIndex) => {
+                                // Handle bullet points
+                                if (line.startsWith('*')) {
+                                    return (
+                                        <li
+                                            key={`list-${lineIndex}`}
+                                            className="ml-4"
+                                        >
+                                            {line.replace('*', '').trim()}
+                                        </li>
+                                    );
+                                }
+                                // Handle headings
+                                if (line.startsWith('**')) {
+                                    return (
+                                        <strong
+                                            key={`heading-${lineIndex}`}
+                                            className="block"
+                                        >
+                                            {line.replace(/\*\*/g, '')}
+                                        </strong>
+                                    );
+                                }
+                                return (
+                                    <p
+                                        key={`text-${lineIndex}`}
+                                        className="break-words"
+                                    >
+                                        {line}
+                                    </p>
+                                );
+                            })}
+                        </div>
                     );
                 }
 
-                if (line.startsWith('[Attached files:')) {
-                    const files =
-                        line
-                            .match(/\[Attached files: (.+)\]/)?.[1]
-                            .split(', ') || [];
-                    return (
-                        <FileListPreview
-                            key={`files-${elementKey}`}
-                            files={files}
-                        />
-                    );
-                }
-
+                // Regular paragraph
                 return (
                     <p
                         key={`text-${elementKey}`}
                         className="break-words whitespace-pre-wrap text-sm"
                     >
-                        {line}
+                        {paragraph}
                     </p>
                 );
             });

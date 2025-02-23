@@ -136,20 +136,21 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
             // Handle AI response
             const aiResponse = await sendToAI(cleanContent, files, voiceBlob);
-            if (aiResponse.status === 'success' && aiResponse.result) {
-                const aiMessageContent =
-                    typeof aiResponse.result === 'string'
-                        ? aiResponse.result
-                        : aiResponse.result.message ||
-                          JSON.stringify(aiResponse.result);
-
+            if (aiResponse.result) {
                 const aiMessage = await chatService.saveMessage({
                     chat_id: activeChatId,
-                    content: aiMessageContent,
+                    content:
+                        typeof aiResponse.result === 'string'
+                            ? aiResponse.result
+                            : JSON.stringify(aiResponse.result),
                     message_type: 'text',
                     is_user: false,
                 });
                 setMessages((prev) => [...prev, aiMessage]);
+            }
+
+            if (aiResponse.error) {
+                toast.error(aiResponse.error);
             }
         } catch (error) {
             // Remove temporary message on error

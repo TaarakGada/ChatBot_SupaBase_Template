@@ -2,76 +2,42 @@
 
 const AI_BOT_RESPONSE_URL = process.env.NEXT_PUBLIC_AI_BOT_RESPONSE_URL;
 
-export interface AIResponse {
+export interface ProcessResponse {
     action: string;
     result: any;
     error?: string;
-    status: 'success' | 'error';
 }
 
-export async function sendToAI(text: string, files?: File[], voiceBlob?: Blob): Promise<AIResponse> {
-    // Mock AI response for now
-    return new Promise(resolve => {
-        // Create a more detailed mock response showing what would be sent
-        const fileDetails = files?.map(f => ({
-            name: f.name,
-            size: f.size,
-            type: f.type
-        }));
+export async function sendToAI(text: string, files?: File[], voiceBlob?: Blob): Promise<ProcessResponse> {
+    try {
+        const formData = new FormData();
+        formData.append('text', text);
 
-        const voiceDetails = voiceBlob ? {
-            size: voiceBlob.size,
-            type: voiceBlob.type
-        } : null;
+        // Backend expects single file, so we'll send the first file if any
+        if (files && files.length > 0) {
+            formData.append('file', files[0]);
+        } else if (voiceBlob) {
+            // If no files but voice exists, send voice as file
+            formData.append('file', new File([voiceBlob], 'voice.wav', { type: 'audio/wav' }));
+        }
 
-        setTimeout(() => {
-            resolve({
-                action: 'mockAction',
-                result: {
-                    message: `Mock response for:
-                    Text: ${text}
-                    Files: ${JSON.stringify(fileDetails)}
-                    Voice: ${JSON.stringify(voiceDetails)}`
-                },
-                status: 'success',
-            });
-        }, 500);
-    });
+        const response = await fetch('https://ff0a-103-139-247-61.ngrok-free.app/process-request/', {
+            method: 'POST',
+            body: formData,
+        });
 
-    // Real API implementation (commented out for now)
-    // try {
-    //     const formData = new FormData();
-    //     formData.append('text', text);
-    //
-    //     // Append all files
-    //     if (files) {
-    //         files.forEach((file, index) => {
-    //             formData.append(`file${index}`, file);
-    //         });
-    //     }
-    //
-    //     // Append voice data if exists
-    //     if (voiceBlob) {
-    //         formData.append('voice', voiceBlob);
-    //     }
-    //
-    //     const response = await fetch("YOUR_API_ENDPOINT", {
-    //         method: 'POST',
-    //         body: formData,
-    //     });
-    //
-    //     if (!response.ok) {
-    //         throw new Error(`API request failed: ${response.statusText}`);
-    //     }
-    //
-    //     return await response.json();
-    // } catch (error) {
-    //     return {
-    //         action: 'error',
-    //         result: {},
-    //         status: 'error',
-    //         error: error instanceof Error ? error.message : 'Unknown error occurred'
-    //     };
-    // }
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data as ProcessResponse;
+    } catch (error) {
+        return {
+            action: 'DIRECT_QUERY',
+            result: {},
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
 }
 
