@@ -9,44 +9,62 @@ export interface AIResponse {
     status: 'success' | 'error';
 }
 
-export async function sendToAI(text: string, files?: File[]): Promise<AIResponse> {
-    // Mock AI response
+export async function sendToAI(text: string, files?: File[], voiceBlob?: Blob): Promise<AIResponse> {
+    // Mock AI response for now
     return new Promise(resolve => {
+        // Create a more detailed mock response showing what would be sent
+        const fileDetails = files?.map(f => ({
+            name: f.name,
+            size: f.size,
+            type: f.type
+        }));
+
+        const voiceDetails = voiceBlob ? {
+            size: voiceBlob.size,
+            type: voiceBlob.type
+        } : null;
+
         setTimeout(() => {
             resolve({
                 action: 'mockAction',
-                result: { message: `Mock response for: ${text}` },
+                result: {
+                    message: `Mock response for:
+                    Text: ${text}
+                    Files: ${JSON.stringify(fileDetails)}
+                    Voice: ${JSON.stringify(voiceDetails)}`
+                },
                 status: 'success',
             });
-        }, 500); // Simulate a delay
+        }, 500);
     });
 
+    // Real API implementation (commented out for now)
     // try {
     //     const formData = new FormData();
     //     formData.append('text', text);
-
-    //     // Only append the first file if it exists
-    //     if (files && files.length > 0) {
-    //         formData.append('file', files[0]);
+    //
+    //     // Append all files
+    //     if (files) {
+    //         files.forEach((file, index) => {
+    //             formData.append(`file${index}`, file);
+    //         });
     //     }
-
-    //     const response = await fetch("https://e7cb-103-139-247-56.ngrok-free.app/process-request/", {
+    //
+    //     // Append voice data if exists
+    //     if (voiceBlob) {
+    //         formData.append('voice', voiceBlob);
+    //     }
+    //
+    //     const response = await fetch("YOUR_API_ENDPOINT", {
     //         method: 'POST',
     //         body: formData,
     //     });
-
+    //
     //     if (!response.ok) {
     //         throw new Error(`API request failed: ${response.statusText}`);
     //     }
-
-    //     const data = await response.json();
-
-    //     return {
-    //         action: data.action,
-    //         result: data.result,
-    //         status: data.error ? 'error' : 'success',
-    //         error: data.error
-    //     };
+    //
+    //     return await response.json();
     // } catch (error) {
     //     return {
     //         action: 'error',

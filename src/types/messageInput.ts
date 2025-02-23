@@ -1,7 +1,5 @@
 export interface MessageInputProps {
-    onSendMessage: (content: string, files?: File[]) => void;
-    onSendVoice: (blob: Blob) => void;
-    onSendFiles: (files: File[]) => void;
+    onSendMessage: (content: string, files?: File[], voiceBlob?: Blob) => void;
     isLoading?: boolean;
 }
 

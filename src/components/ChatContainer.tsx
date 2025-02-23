@@ -5,6 +5,7 @@ import { chatService } from '../services/chatService';
 import { Message as MessageType, MessageContent } from '../lib/supabase';
 import { sendToAI } from '../services/api';
 import toast from 'react-hot-toast';
+import { LoadingSkeleton } from './LoadingSkeleton';
 
 interface ChatContainerProps {
     activeChatId: string;
@@ -17,6 +18,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 }) => {
     const [messages, setMessages] = useState<MessageType[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isAILoading, setIsAILoading] = useState(false);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     const isValidUUID = (uuid: string) => {
@@ -46,36 +48,48 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         }
     };
 
-    const handleMessageSubmit = async (content: string, files?: File[]) => {
-        console.log('Starting handleMessageSubmit with:', {
-            content,
-            filesCount: files?.length,
-        });
-
+    const handleMessageSubmit = async (
+        content: string,
+        files?: File[],
+        voiceBlob?: Blob
+    ) => {
         if (!activeChatId || !isValidUUID(activeChatId)) {
-            console.error('Invalid chat session:', { activeChatId });
             toast.error('Invalid chat session');
             return;
         }
 
+        // Clean up the content
+        const cleanContent = content
+            .replace(/\[Voice Recording:.*?\]/g, '')
+            .replace(/\[Attached files:.*?\]/g, '')
+            .trim();
+
+        // Create temporary message for optimistic update
+        const tempMessage: MessageType = {
+            id: crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            chat_id: activeChatId,
+            content: cleanContent || 'Shared content',
+            message_type: 'text',
+            is_user: true,
+            files: [],
+            file_urls: [],
+            file_names: [],
+        };
+
+        // Optimistically add message to UI
+        setMessages((prev) => [...prev, tempMessage]);
         setIsLoading(true);
+        setIsAILoading(true);
+
         try {
-            // Clean up the content by removing system-generated text
-            const cleanContent = content
-                .replace(/\[Voice Recording:.*?\]/g, '')
-                .replace(/\[Attached files:.*?\]/g, '')
-                .trim();
+            // Handle uploads in background
+            const uploadPromises: Promise<any>[] = [];
+            let uploadedFiles: { url: string; name: string }[] = [];
 
-            console.log('Preparing message data...');
-
-            // Handle files if present
-            if (files && files.length > 0) {
-                console.log(
-                    'Processing files:',
-                    files.map((f) => f.name)
-                );
-                try {
-                    const uploadedFiles = await Promise.all(
+            if (files?.length) {
+                uploadPromises.push(
+                    Promise.all(
                         files.map(async (file) => {
                             const fileUrl = await chatService.uploadFile(
                                 file,
@@ -83,53 +97,65 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                             );
                             return { url: fileUrl, name: file.name };
                         })
-                    );
-
-                    // Save file message
-                    const fileMessage = await chatService.saveMessage({
-                        chat_id: activeChatId,
-                        content: files.map((f) => f.name).join(', '),
-                        message_type: 'file',
-                        files: uploadedFiles,
-                        is_user: true,
-                    });
-                    setMessages((prev) => [...prev, fileMessage]);
-                } catch (fileError) {
-                    console.error('Error uploading files:', fileError);
-                    throw fileError;
-                }
+                    ).then((results) => {
+                        uploadedFiles = results;
+                    })
+                );
             }
 
-            // If there's actual text content, save it as a separate text message
-            if (cleanContent) {
-                const textMessage = await chatService.saveMessage({
-                    chat_id: activeChatId,
-                    content: cleanContent,
-                    message_type: 'text',
-                    is_user: true,
+            let voiceUrl: string | null = null;
+            if (voiceBlob) {
+                const voiceFile = new File([voiceBlob], 'voice-message.wav', {
+                    type: 'audio/wav',
                 });
-                setMessages((prev) => [...prev, textMessage]);
+                uploadPromises.push(
+                    chatService.uploadFile(voiceFile, userId).then((url) => {
+                        voiceUrl = url;
+                    })
+                );
+            }
 
-                // Handle AI response only for text messages
-                console.log('Sending to AI:', cleanContent);
-                const aiResponse = await sendToAI(cleanContent, files);
-                if (aiResponse.status === 'success' && aiResponse.result) {
-                    const aiMessageContent =
-                        typeof aiResponse.result === 'string'
-                            ? aiResponse.result
-                            : aiResponse.result.message ||
-                              JSON.stringify(aiResponse.result);
+            // Wait for all uploads to complete
+            await Promise.all(uploadPromises);
 
-                    const aiMessage = await chatService.saveMessage({
-                        chat_id: activeChatId,
-                        content: aiMessageContent,
-                        message_type: 'text',
-                        is_user: false,
-                    });
-                    setMessages((prev) => [...prev, aiMessage]);
-                }
+            // Save message to database with uploaded files
+            const savedMessage = await chatService.saveMessage({
+                ...tempMessage,
+                files: uploadedFiles,
+                voice_url: voiceUrl,
+                file_urls: uploadedFiles.map((f) => f.url),
+                file_names: uploadedFiles.map((f) => f.name),
+            });
+
+            // Update the temporary message with the saved one
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === tempMessage.id ? savedMessage : msg
+                )
+            );
+
+            // Handle AI response
+            const aiResponse = await sendToAI(cleanContent, files, voiceBlob);
+            if (aiResponse.status === 'success' && aiResponse.result) {
+                const aiMessageContent =
+                    typeof aiResponse.result === 'string'
+                        ? aiResponse.result
+                        : aiResponse.result.message ||
+                          JSON.stringify(aiResponse.result);
+
+                const aiMessage = await chatService.saveMessage({
+                    chat_id: activeChatId,
+                    content: aiMessageContent,
+                    message_type: 'text',
+                    is_user: false,
+                });
+                setMessages((prev) => [...prev, aiMessage]);
             }
         } catch (error) {
+            // Remove temporary message on error
+            setMessages((prev) =>
+                prev.filter((msg) => msg.id !== tempMessage.id)
+            );
             console.error('Error in handleMessageSubmit:', error);
             toast.error(
                 error instanceof Error
@@ -138,87 +164,17 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             );
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleVoiceMessage = async (blob: Blob) => {
-        console.log('Starting handleVoiceMessage');
-        if (!activeChatId || !isValidUUID(activeChatId)) {
-            toast.error('Invalid chat session');
-            return;
-        }
-
-        try {
-            const file = new File([blob], 'voice-message.wav', {
-                type: 'audio/wav',
-            });
-            const fileUrl = await chatService.uploadFile(file, userId);
-
-            const message = await chatService.saveMessage({
-                chat_id: activeChatId,
-                content: 'Voice Message', // Description as content
-                message_type: 'voice',
-                voice_url: fileUrl,
-                is_user: true,
-            });
-            setMessages((prev) => [...prev, message]);
-        } catch (error) {
-            console.error('Error saving voice message:', error);
-            toast.error('Failed to save voice message');
-        }
-    };
-
-    const handleFiles = async (files: File[]) => {
-        console.log(
-            'Starting handleFiles with:',
-            files.map((f) => f.name)
-        );
-        if (!activeChatId || !isValidUUID(activeChatId)) {
-            toast.error('Invalid chat session');
-            return;
-        }
-
-        try {
-            const fileUrls: string[] = [];
-            const fileNames: string[] = [];
-
-            for (const file of files) {
-                const fileUrl = await chatService.uploadFile(file, userId);
-                fileUrls.push(fileUrl);
-                fileNames.push(file.name);
-            }
-
-            const message = await chatService.saveMessage({
-                chat_id: activeChatId,
-                content: fileNames.join(', '),
-                message_type: 'file',
-                file_urls: fileUrls,
-                file_names: fileNames,
-                is_user: true,
-            });
-            setMessages((prev) => [...prev, message]);
-        } catch (error) {
-            console.error('Error saving files:', error);
-            toast.error('Failed to save files');
+            setIsAILoading(false);
         }
     };
 
     const formatMessageContent = (message: MessageType): MessageContent => {
-        if (message.message_type === 'text') {
-            return {
-                text: message.content,
-            };
-        }
-        if (message.message_type === 'voice') {
-            return {
-                text: message.content,
-                voice_url: message.voice_url,
-            };
-        }
         return {
             text: message.content,
+            voice_url: message.voice_url,
             file_urls: message.file_urls,
             file_names: message.file_names,
+            files: message.files,
         };
     };
 
@@ -254,16 +210,13 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                         key={`${message.id || index}-${message.created_at}`}
                         content={formatMessageContent(message)}
                         isUser={message.is_user}
-                        timestamp={new Date(
-                            message.created_at
-                        ).toLocaleTimeString()}
+                        timestamp={message.created_at}
                     />
                 ))}
+                {isAILoading && <LoadingSkeleton />}
             </div>
             <MessageInput
                 onSendMessage={handleMessageSubmit}
-                onSendVoice={handleVoiceMessage}
-                onSendFiles={handleFiles}
                 isLoading={isLoading}
             />
         </div>

@@ -14,9 +14,7 @@ import FileList from './FileList';
 
 export const MessageInput: React.FC<MessageInputProps> = ({
     onSendMessage,
-    onSendVoice,
-    onSendFiles,
-    isLoading = false, // Add default value
+    isLoading = false,
 }) => {
     const [message, setMessage] = useState('');
     const [showToolList, setShowToolList] = useState(false);
@@ -142,9 +140,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             return;
         }
 
-        if (isLoading) return; // Add this check
+        if (isLoading) return;
 
         try {
+            // Combine all content into a single message
             const userContent = [
                 message.trim() && `${message.trim()}`,
                 voiceBlob &&
@@ -157,10 +156,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 .filter(Boolean)
                 .join('\n');
 
-            // Pass both content and files to onSendMessage
-            onSendMessage(userContent, selectedFiles);
+            // Send everything in one call
+            onSendMessage(userContent, selectedFiles, voiceBlob || undefined);
 
-            // Clear all inputs
+            // Clear all inputs after successful send
             setMessage('');
             setVoiceBlob(null);
             setSelectedFiles([]);

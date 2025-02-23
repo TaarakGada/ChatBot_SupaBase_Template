@@ -117,6 +117,48 @@ const handleSendMessage = async (content: string, files?: File[]) => {
 };
 ```
 
+# API Integration Documentation
+
+## Message Handling Flow
+
+The application handles message submission through the following flow:
+
+1. **Entry Point**: Messages are initiated from the `MessageInput` component, which collects:
+   - Text content
+   - File attachments
+   - Voice recordings
+
+2. **Message Processing**: The `ChatContainer` component processes messages through `handleMessageSubmit`:
+   ```typescript
+   handleMessageSubmit(content: string, files?: File[], voiceBlob?: Blob)
+   ```
+
+3. **API Communication**: Messages are sent to the AI service using the `sendToAI` function in `services/api.ts`:
+   ```typescript
+   sendToAI(text: string, files?: File[], voiceBlob?: Blob): Promise<AIResponse>
+   ```
+
+### Data Format
+
+The API expects data in the following format:
+- Text content as string
+- Multiple files as File objects
+- Voice data as Blob object
+
+All data is sent in a single request using FormData, combining:
+- Text messages
+- File attachments
+- Voice recordings
+
+### Current Implementation Note
+
+The API is currently mocked for development. The mock response simulates the structure of the expected API response while showing what data would be sent to the backend.
+
+When implementing the actual API:
+1. Uncomment the real API implementation in `services/api.ts`
+2. Replace `YOUR_API_ENDPOINT` with the actual endpoint
+3. Ensure your backend can handle multipart/form-data with multiple files and voice data
+
 ## Contributing
 
 1. Fork the repository

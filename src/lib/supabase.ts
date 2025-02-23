@@ -40,7 +40,12 @@ export interface Message {
 
 export type MessageContent = {
     text?: string;
+    voice_url?: string | null;
     file_urls?: string[] | null;
     file_names?: string[] | null;
-    voice_url?: string | null;
+    files?: Array<{
+        url: string;
+        name: string;
+        type?: string;
+    }>;
 };
